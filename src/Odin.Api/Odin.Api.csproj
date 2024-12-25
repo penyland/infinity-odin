@@ -7,7 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Infinity.Toolkit.FeatureModules" Version="1.0.2" />
+    <PackageReference Include="Infinity.Toolkit.LogFormatter" Version="1.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Odin.Api.IntegrationTests" />
+    <InternalsVisibleTo Include="Odin.Api.Tests" />
   </ItemGroup>
 
 </Project>
