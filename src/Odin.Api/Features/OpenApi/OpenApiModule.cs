@@ -17,7 +17,6 @@ public class OpenApiModule : IWebFeatureModule
         {
             options.AddDocumentTransformer((document, serviceProvider, _) =>
             {
-                var info = context.Configuration.GetSection("OpenApi:Info").Get<OpenApiInfo>() ?? new OpenApiInfo();
                 document.Info.Title = context.Configuration["OpenApi:Info:Title"];
                 document.Info.Version = $"Version {Assembly.GetExecutingAssembly().GetName().Version?.ToString()}";
                 document.Info.Description = $"{context.Configuration["OpenApi:Info:Description"]} - Environment: {context.Environment.EnvironmentName}";
@@ -28,7 +27,6 @@ public class OpenApiModule : IWebFeatureModule
 
             options.AddDocumentTransformer<SecuritySchemeDefinitionsTransformer>();
             options.AddDocumentTransformer<AddServersTransformer>();
-
 
             options.AddOperationTransformer((operation, transformerContext, ct) =>
             {
@@ -55,13 +53,23 @@ public class OpenApiModule : IWebFeatureModule
         return context;
     }
 
-    public void MapEndpoints(IEndpointRouteBuilder builder)
+    public void MapEndpoints(WebApplication app)
     {
-        builder.MapOpenApi();
+        app.MapOpenApi();
 
-        builder.MapScalarApiReference(options =>
+        app.MapScalarApiReference(options =>
         {
             options.WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl);
+
+            options.Authentication = new()
+            {
+                OAuth2 = new()
+                {
+                    ClientId = app.Configuration.GetValue<string>("AzureAd:ClientId"),
+                    Scopes = [$"{app.Configuration.GetValue<string>("AzureAd:AppIdentifier")}/{app.Configuration.GetValue<string>("Scalar:Authentication:OAuth2:Scopes")}"]
+                },
+                PreferredSecurityScheme = "oauth2"
+            };
         });
     }
 
