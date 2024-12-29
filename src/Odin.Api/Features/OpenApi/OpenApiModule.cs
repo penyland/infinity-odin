@@ -20,12 +20,13 @@ public class OpenApiModule : IWebFeatureModule
                 document.Info.Title = context.Configuration["OpenApi:Info:Title"];
                 document.Info.Version = $"Version {Assembly.GetExecutingAssembly().GetName().Version?.ToString()}";
                 document.Info.Description = $"{context.Configuration["OpenApi:Info:Description"]} - Environment: {context.Environment.EnvironmentName}";
-                
+
                 document.Servers = [];
                 return Task.CompletedTask;
             });
 
-            options.AddDocumentTransformer<SecuritySchemeDefinitionsTransformer>();
+            options.AddDocumentTransformer<OAuth2SecuritySchemeDefinitionTransformer>();
+            options.AddDocumentTransformer<BearerSecuritySchemeDefinitionTransformer>();
             options.AddDocumentTransformer<AddServersTransformer>();
 
             options.AddOperationTransformer((operation, transformerContext, ct) =>
@@ -40,8 +41,15 @@ public class OpenApiModule : IWebFeatureModule
                         Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "oauth2" },
                     };
 
+                    var bearerScheme = new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference{Type = ReferenceType.SecurityScheme,Id = "bearer"}
+                    };
+
                     var scopes = context.Configuration.GetRequiredSection("AzureAd:Scopes").GetChildren().ToDictionary(x => $"{context.Configuration["AzureAd:AppIdentifier"]}/{x}", x => x.Value);
-                    operation.Security = [new() { [oauth2Scheme] = [.. scopes.Keys] }];
+                    operation.Security ??= [];
+                    operation.Security.Add(new() { [oauth2Scheme] = [.. scopes.Keys] });
+                    operation.Security.Add(new() { [bearerScheme] = [.. scopes.Keys] });
                 }
 
                 return Task.CompletedTask;
@@ -55,25 +63,29 @@ public class OpenApiModule : IWebFeatureModule
 
     public void MapEndpoints(WebApplication app)
     {
-        app.MapOpenApi();
-
-        app.MapScalarApiReference(options =>
+        if (app.Environment.IsDevelopment())
         {
-            options.WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl);
+            app.MapOpenApi();
 
-            options.Authentication = new()
+            app.MapScalarApiReference(options =>
             {
-                OAuth2 = new()
+                options.WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl);
+
+                // Authentication defaults
+                options.Authentication = new()
                 {
-                    ClientId = app.Configuration.GetValue<string>("AzureAd:ClientId"),
-                    Scopes = [$"{app.Configuration.GetValue<string>("AzureAd:AppIdentifier")}/{app.Configuration.GetValue<string>("Scalar:Authentication:OAuth2:Scopes")}"]
-                },
-                PreferredSecurityScheme = "oauth2"
-            };
-        });
+                    OAuth2 = new()
+                    {
+                        ClientId = app.Configuration.GetValue<string>("AzureAd:ClientId"),
+                        Scopes = [$"{app.Configuration.GetValue<string>("AzureAd:AppIdentifier")}/{app.Configuration.GetValue<string>("Scalar:Authentication:OAuth2:Scopes")}"]
+                    },
+                    PreferredSecurityScheme = "bearer"
+                };
+            });
+        }
     }
 
-    private class SecuritySchemeDefinitionsTransformer(IConfiguration configuration) : IOpenApiDocumentTransformer
+    private class OAuth2SecuritySchemeDefinitionTransformer(IConfiguration configuration) : IOpenApiDocumentTransformer
     {
         public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
         {
@@ -103,6 +115,23 @@ public class OpenApiModule : IWebFeatureModule
 
             document.Components ??= new();
             document.Components.SecuritySchemes.Add("oauth2", securityScheme);
+            return Task.CompletedTask;
+        }
+    }
+
+    private class BearerSecuritySchemeDefinitionTransformer : IOpenApiDocumentTransformer
+    {
+        public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
+        {
+            var securityScheme = new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Name = "bearer",
+                Scheme = "bearer",
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "bearer" }
+            };
+            document.Components ??= new();
+            document.Components.SecuritySchemes.Add("bearer", securityScheme);
             return Task.CompletedTask;
         }
     }

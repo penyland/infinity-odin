@@ -4,15 +4,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddFeatureModules();
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddAuthentication().AddJwtBearer();
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    //app.MapOpenApi();
-}
-
 app.UseHttpsRedirection();
 
 app.MapFeatureModules();

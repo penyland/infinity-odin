@@ -1,45 +1,44 @@
 ﻿using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Odin.Api.Features.Weather;
+using static Odin.Api.Features.Info.InfoEndpoints;
 
 namespace Odin.Api.IntegrationTests.Features;
 
-public class WeatherModuleTests(IntegrationTestClassFixture factory) : IClassFixture<IntegrationTestClassFixture>
+public class InfoModuleTests(IntegrationTestClassFixture factory) : IClassFixture<IntegrationTestClassFixture>
 {
     private readonly WebApplicationFactory<Program> factory = factory;
 
     [Fact]
-    public async Task GetWeatherForecast_ReturnsSuccessStatusCode()
+    public async Task GetVersion_ReturnsSuccessStatusCode()
     {
         // Arrange
         var client = factory.CreateClient();
         // Act
-        var response = await client.GetAsync("/weatherforecast");
+        var response = await client.GetAsync("/info/version");
         // Assert
         response.EnsureSuccessStatusCode();
     }
 
     [Fact]
-    public async Task GetWeatherForecast_ReturnsExpectedMediaType()
+    public async Task GetVersion_ReturnsExpectedMediaType()
     {
         // Arrange
         var client = factory.CreateClient();
         // Act
-        var response = await client.GetAsync("/weatherforecast");
+        var response = await client.GetAsync("/info");
         // Assert
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
     }
 
     [Fact]
-    public async Task GetWeatherForecast_ReturnsExpectedResponse()
+    public async Task GetInfo_ReturnsExpectedResponse()
     {
         // Arrange
         var client = factory.CreateClient();
         // Act
-        var response = await client.GetAsync("/weatherforecast");
+        var response = await client.GetAsync("/info");
         // Assert
-        var forecast = await response.Content.ReadFromJsonAsync<WeatherForecast[]>();
+        var forecast = await response.Content.ReadFromJsonAsync<Info[]>();
         forecast.Should().NotBeNullOrEmpty();
-        forecast.Should().HaveCount(5);
     }
 }
