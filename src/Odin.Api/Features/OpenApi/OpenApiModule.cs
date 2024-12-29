@@ -46,10 +46,10 @@ public class OpenApiModule : IWebFeatureModule
                         Reference = new OpenApiReference{Type = ReferenceType.SecurityScheme,Id = "bearer"}
                     };
 
-                    var scopes = context.Configuration.GetRequiredSection("AzureAd:Scopes").GetChildren().ToDictionary(x => $"{context.Configuration["AzureAd:AppIdentifier"]}/{x}", x => x.Value);
+                    var scopes = GetScopes(context.Configuration);
                     operation.Security ??= [];
-                    operation.Security.Add(new() { [oauth2Scheme] = [.. scopes.Keys] });
-                    operation.Security.Add(new() { [bearerScheme] = [.. scopes.Keys] });
+                    operation.Security.Add(new() { [oauth2Scheme] = [.. scopes] });
+                    operation.Security.Add(new() { [bearerScheme] = [.. scopes] });
                 }
 
                 return Task.CompletedTask;
@@ -71,19 +71,21 @@ public class OpenApiModule : IWebFeatureModule
             {
                 options.WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl);
 
-                // Authentication defaults
+                var userImpersonationScope = GetScopes(app.Configuration)?.First(x => x.Contains("user_impersonation"));
                 options.Authentication = new()
                 {
                     OAuth2 = new()
                     {
                         ClientId = app.Configuration.GetValue<string>("AzureAd:ClientId"),
-                        Scopes = [$"{app.Configuration.GetValue<string>("AzureAd:AppIdentifier")}/{app.Configuration.GetValue<string>("Scalar:Authentication:OAuth2:Scopes")}"]
+                        Scopes = [userImpersonationScope ?? ""],
                     },
                     PreferredSecurityScheme = "bearer"
                 };
             });
         }
     }
+
+    private static IEnumerable<string> GetScopes(IConfiguration configuration) => configuration.GetValue<string>("AzureAd:Scopes")?.Split(" ").Select(x => $"{configuration["AzureAd:AppIdentifier"]}/{x}") ?? [];
 
     private class OAuth2SecuritySchemeDefinitionTransformer(IConfiguration configuration) : IOpenApiDocumentTransformer
     {
