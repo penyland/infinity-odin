@@ -21,4 +21,8 @@
     <InternalsVisibleTo Include="Odin.Api.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Odin.ServiceDefaults\Odin.ServiceDefaults.csproj" />
+  </ItemGroup>
+
 </Project>
