@@ -14,8 +14,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddProblemDetails(options =>
     options.CustomizeProblemDetails = ctx =>
     {
-        ctx.ProblemDetails.Extensions["trace-id"] = ctx.HttpContext.TraceIdentifier;
-        ctx.ProblemDetails.Extensions["instance"] = ctx.HttpContext.Request.Method;
+        ctx.ProblemDetails.Instance = $"{ctx.HttpContext.Request.Method} {ctx.HttpContext.Request.Path}";
+        ctx.ProblemDetails.Extensions.TryAdd("requestId", ctx.HttpContext.TraceIdentifier);
     });
 builder.Services.AddExceptionHandler<ExceptionToProblemDetailsHandler>();
 
