@@ -1,5 +1,4 @@
-# infinity-odin
-Odin - An Open Internal Developer Platform.
+# Odin - An Open Internal Developer Platform.
 
 # Build and deploy
 
@@ -72,3 +71,31 @@ To run .NET Aspire Dashboard, run the following command:
 ```
 docker run --rm -it -p 18888:18888 -p 4317:18889 -d --name aspire-dashboard -e DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS='true' mcr.microsoft.com/dotnet/aspire-dashboard:latest
 ```
+
+# Authentication
+A few of the endpoints in Odin.Api require authentication. To authenticate, you need to provide a valid JWT token in the `Authorization` header. The JWT token should be in the format `Bearer <token>`.
+Currently the Odin.Api supports two issuers
+- Azure AD
+- dotnet-user-jwts
+
+## Using dotnet-user-jwts
+First check if you have created a JWT token for the user previously.
+```
+dotnet user-jwts list --project .\src\Odin.Api\Odin.Api.csproj
+```
+
+If you haven't created a JWT token for the user, create a JWT token for the user by running the following command:
+```
+dotnet user-jwts create --project .\src\Odin.Api\Odin.Api.csproj
+```
+
+This will create a JWT token for the user and print the token to the console. It will also save information about the token to the user-secrets defined for the project in secrets.json.
+The path to the user-secrets is defined in the project file. The default path is `C:\Users\<username>\AppData\Roaming\Microsoft\UserSecrets\<user-secrets-id>\secrets.json`.
+The token itself is saved in another file called `user-jwts.json` in the same directory.
+
+To authenticate using the JWT token, copy the token from the console and provide it in the `Authorization` header in the format `Bearer <token>`.
+```
+curl -i -H "Authorization: Bearer <TOKEN>" https://localhost:5001/info/config
+```
+
+For more information about the `dotnet user-jwts` command, browse to the [dotnet user-jwts documentation](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/jwt-authn?view=aspnetcore-9.0&tabs=linux)
