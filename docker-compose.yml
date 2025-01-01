@@ -1,0 +1,17 @@
+services:
+  odin-api:
+    image: odin/api:latest
+    ports:
+      - 5001:8080
+    environment:
+      - ASPNETCORE_URLS=https://+:8080
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTPS_PORT=5001
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=docker
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+    volumes:
+      - ${USERPROFILE}\.aspnet\https:/https/
+      - ${APPDATA}\microsoft\UserSecrets\:/root/.microsoft/usersecrets
+    user: root
+    expose:
+      - "5001"
