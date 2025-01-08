@@ -20,7 +20,7 @@
     <PackageReference Include="Infinity.Toolkit.LogFormatter" Version="1.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
-    <PackageReference Include="Scalar.AspNetCore" Version="1.2.72" />
+    <PackageReference Include="Scalar.AspNetCore" Version="1.2.74" />
   </ItemGroup>
 
   <ItemGroup>

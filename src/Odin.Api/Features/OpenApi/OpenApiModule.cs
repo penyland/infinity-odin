@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using System.Reflection;
@@ -85,7 +87,11 @@ public class OpenApiModule : IWebFeatureModule
                     {
                         AuthorizationUrl = authorizationUrl,
                         TokenUrl = tokenUrl,
-                        Scopes = scopes
+                        Scopes = scopes,
+                        Extensions = new Dictionary<string, IOpenApiExtension>
+                        {
+                            ["x-usePkce"] = new OpenApiString("SHA-256")
+                        }
                     }
                 }
             };
