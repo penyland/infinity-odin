@@ -52,6 +52,7 @@ public class OpenApiModule : IWebFeatureModule
                 var userImpersonationScope = GetScopes(app.Configuration)?.First(x => x.Contains("user_impersonation"));
                 options.Authentication = new()
                 {
+                    PreferredSecurityScheme = "none",
                     OAuth2 = new()
                     {
                         ClientId = app.Configuration.GetValue<string>("AzureAd:ClientId"),

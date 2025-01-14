@@ -36,6 +36,22 @@ public static class InfoEndpoints
             .Produces<IEnumerable<FeatureModuleInfo>>(StatusCodes.Status200OK)
             .RequireAuthorization();
 
+        group.MapGet("/exception", () =>
+        {
+            throw new Exception("This is a test error");
+        })
+        .Produces(StatusCodes.Status500InternalServerError);
+
+        group.MapGet("/invalidoperation", () =>
+        {
+            throw new InvalidOperationException("This is a InvalidOperation error");
+        });
+
+        group.MapGet("/error", (int errorCode) =>
+        {
+            return TypedResults.Problem("This is a test error", statusCode: errorCode);
+        });
+
         return group;
     }
 

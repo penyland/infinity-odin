@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Odin.ServiceDefaults\Odin.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\Odin.ServiceDefaults\Odin.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>
