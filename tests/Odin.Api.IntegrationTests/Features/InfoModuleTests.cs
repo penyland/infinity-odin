@@ -1,5 +1,5 @@
-﻿using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
+﻿using Microsoft.AspNetCore.Mvc.Testing;
+using Shouldly;
 using static Odin.Api.Features.Info.InfoEndpoints;
 
 namespace Odin.Api.IntegrationTests.Features;
@@ -25,9 +25,9 @@ public class InfoModuleTests(IntegrationTestClassFixture factory) : IClassFixtur
         // Arrange
         var client = factory.CreateClient();
         // Act
-        var response = await client.GetAsync("/info");
+        var response = await client.GetAsync("/info/version");
         // Assert
-        response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
+        response.Content.Headers.ContentType?.MediaType.ShouldBe("application/json");
     }
 
     [Fact]
@@ -35,10 +35,11 @@ public class InfoModuleTests(IntegrationTestClassFixture factory) : IClassFixtur
     {
         // Arrange
         var client = factory.CreateClient();
+
         // Act
-        var response = await client.GetAsync("/info");
+        var response = await client.GetFromJsonAsync<Info>("/info/version");
+
         // Assert
-        var forecast = await response.Content.ReadFromJsonAsync<Info[]>();
-        forecast.Should().NotBeNullOrEmpty();
+        response.ShouldNotBeNull();
     }
 }

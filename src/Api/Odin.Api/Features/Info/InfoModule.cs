@@ -88,7 +88,7 @@ public static class InfoEndpoints
         });
     }
 
-    internal record Info()
+    internal record Info
     {
         [Description("The name of the service.")]
         public string? Name { get; init; }
