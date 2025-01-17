@@ -14,7 +14,7 @@ public class InfoModuleTests(IntegrationTestClassFixture factory) : IClassFixtur
         // Arrange
         var client = factory.CreateClient();
         // Act
-        var response = await client.GetAsync("/info/version");
+        var response = await client.GetAsync("/info/version", CancellationToken.None);
         // Assert
         response.EnsureSuccessStatusCode();
     }
@@ -25,7 +25,7 @@ public class InfoModuleTests(IntegrationTestClassFixture factory) : IClassFixtur
         // Arrange
         var client = factory.CreateClient();
         // Act
-        var response = await client.GetAsync("/info/version");
+        var response = await client.GetAsync("/info/version", CancellationToken.None);
         // Assert
         response.Content.Headers.ContentType?.MediaType.ShouldBe("application/json");
     }
@@ -37,7 +37,7 @@ public class InfoModuleTests(IntegrationTestClassFixture factory) : IClassFixtur
         var client = factory.CreateClient();
 
         // Act
-        var response = await client.GetFromJsonAsync<Info>("/info/version");
+        var response = await client.GetFromJsonAsync<Info>("/info/version", CancellationToken.None);
 
         // Assert
         response.ShouldNotBeNull();
