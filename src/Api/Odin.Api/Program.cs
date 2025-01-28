@@ -1,3 +1,4 @@
+using Microsoft.Identity.Web;
 using Odin.Api.ExceptionHandlers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,7 +9,9 @@ builder.AddServiceDefaults();
 builder.AddFeatureModules();
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddAuthentication().AddJwtBearer();
+builder.Services.AddAuthentication()
+    .AddMicrosoftIdentityWebApi(builder.Configuration);
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddProblemDetails(options =>
@@ -41,4 +44,4 @@ app.MapFeatureModules();
 
 app.Run();
 
-public partial class  Program { }
+public partial class Program { }
