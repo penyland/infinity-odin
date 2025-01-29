@@ -52,6 +52,8 @@ public static class InfoEndpoints
             return TypedResults.Problem("This is a test error", statusCode: errorCode);
         });
 
+        group.MapGet("/secret", () => { return "This is a secret!"; }).RequireAuthorization(opt => opt.RequireAuthenticatedUser());
+
         return group;
     }
 
