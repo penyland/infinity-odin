@@ -22,6 +22,7 @@ public class OpenApiModule : IWebFeatureModule
                 document.Info.Title = context.Configuration["OpenApi:Info:Title"];
                 document.Info.Version = $"Version {Assembly.GetExecutingAssembly().GetName().Version?.ToString()}";
                 document.Info.Description = $"{context.Configuration["OpenApi:Info:Description"]} - Environment: {context.Environment.EnvironmentName}";
+                document.Info.Extensions.Add("Environment", new OpenApiString(context.Environment.EnvironmentName));
 
                 document.Servers = [];
                 return Task.CompletedTask;
