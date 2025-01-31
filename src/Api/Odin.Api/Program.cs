@@ -10,7 +10,7 @@ builder.AddServiceDefaults();
 builder.AddFeatureModules();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddMicrosoftIdentityWebApi(builder.Configuration, subscribeToJwtBearerMiddlewareDiagnosticsEvents: true);
+                    .AddMicrosoftIdentityWebApi(builder.Configuration);
 
 builder.Services.AddAuthorization();
 
