@@ -98,4 +98,22 @@ To authenticate using the JWT token, copy the token from the console and provide
 curl -i -H "Authorization: Bearer <TOKEN>" https://localhost:5001/info/config
 ```
 
+There's a bug in the dotnet SDK <= 9.0.102 which generates incorrect configuration which results in [IDX10500](https://github.com/dotnet/aspnetcore/issues/59277). To work around this issue, you have to change the configuration key 
+ValidIssuer to ValidIssuers in appsettings.development.json. The configuration should look like this:
+
+```json
+  "Authentication": {
+    "DefaultScheme": "Bearer",
+    "Schemes": {
+      "Bearer": {
+        "ValidAudiences": [
+          "http://localhost:5016",
+          "https://localhost:7119"
+        ],
+        "ValidIssuers": [ "dotnet-user-jwts" ]
+      }
+    }
+  }
+```
+
 For more information about the `dotnet user-jwts` command, browse to the [dotnet user-jwts documentation](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/jwt-authn?view=aspnetcore-9.0&tabs=linux)
