@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Odin.AppHost/Odin.AppHost.csproj" />
+    <Project Path="src/Odin.ServiceDefaults/Odin.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/src/Api/" Id="81034408-37c8-1011-444e-4c15c2fada8e">
+    <Project Path="src/Api/Odin.Api/Odin.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Odin.Api.IntegrationTests/Odin.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Odin.Api.Tests/Odin.Api.Tests.csproj" />
+  </Folder>
+</Solution>
