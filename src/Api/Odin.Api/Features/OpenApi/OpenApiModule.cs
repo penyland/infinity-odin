@@ -63,15 +63,13 @@ public class OpenApiModule : IWebFeatureModule
         }
     }
 
-    private static IEnumerable<string> GetScopes(IConfiguration configuration) => configuration.GetValue<string>("AzureAd:Scopes")?.Split(" ").Select(x => $"{configuration["AzureAd:AppIdentifier"]}/{x}") ?? [];
+    private static string[] GetScopes(IConfiguration configuration) => configuration.GetValue<string>("AzureAd:Scopes")?.Split(" ") ?? [];
 
     private sealed class OAuth2SecuritySchemeDefinitionDocumentTransformer(IConfiguration configuration) : IOpenApiDocumentTransformer
     {
         public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
         {
             var azureAdSection = configuration.GetRequiredSection("AzureAd");
-            var scopes = azureAdSection.GetValue<string>("Scopes")?.Split(" ").ToDictionary(x => $"{azureAdSection["AppIdentifier"]}/{x}", x => x);
-
             var authorityUrl = new Uri($"{azureAdSection["Instance"]}{azureAdSection["TenantId"]}", UriKind.Absolute);
             var authorizationUrl = new Uri($"{authorityUrl}/oauth2/v2.0/authorize", UriKind.Absolute);
             var tokenUrl = new Uri($"{authorityUrl}/oauth2/v2.0/token", UriKind.Absolute);
@@ -88,7 +86,7 @@ public class OpenApiModule : IWebFeatureModule
                     {
                         AuthorizationUrl = authorizationUrl,
                         TokenUrl = tokenUrl,
-                        Scopes = scopes,
+                        Scopes = azureAdSection.GetValue<string>("Scopes")?.Split(" ").ToDictionary(x => x, x => x),
                         Extensions = new Dictionary<string, IOpenApiExtension>
                         {
                             ["x-usePkce"] = new OpenApiString("SHA-256")

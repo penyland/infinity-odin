@@ -22,6 +22,11 @@ builder.Services.AddProblemDetails(options =>
     });
 builder.Services.AddExceptionHandler<ExceptionToProblemDetailsHandler>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
+
 var app = builder.Build();
 
 app.UseStatusCodePages();
@@ -33,6 +38,8 @@ app.UseExceptionHandler(new ExceptionHandlerOptions
         _ => StatusCodes.Status500InternalServerError,
     },
 });
+
+app.UseCors("AllowAll");
 
 app.MapDefaultEndpoints();
 

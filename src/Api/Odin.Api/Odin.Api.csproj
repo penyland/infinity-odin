@@ -19,10 +19,10 @@
     <PackageReference Include="Infinity.Toolkit.FeatureModules" Version="1.1.2" />
     <PackageReference Include="Infinity.Toolkit.LogFormatter" Version="1.0.4" />
     <PackageReference Include="Infinity.Toolkit.Messaging" Version="1.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />
-    <PackageReference Include="Microsoft.Identity.Web" Version="3.7.1" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.0.21" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="3.8.1" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.1.1" />
   </ItemGroup>
 
   <ItemGroup>
