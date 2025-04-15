@@ -29,8 +29,8 @@ public static class InfoEndpoints
             .Produces<Info>(StatusCodes.Status200OK);
 
         group.MapGet("/config", GetConfig)
-            .Produces<string>(StatusCodes.Status200OK)
-            .RequireAuthorization();
+            .Produces<string>(StatusCodes.Status200OK);
+            //.RequireAuthorization();
 
         group.MapGet("/modules", GetFeatureModuleInfos)
             .Produces<IEnumerable<FeatureModuleInfo>>(StatusCodes.Status200OK)

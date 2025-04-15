@@ -17,4 +17,9 @@ var api = builder.AddProject<Projects.Odin_Api>("odin-api")
     .WithReference(storage)
     .WithScalarCommand();
 
+var proxy = builder.AddProject<Projects.Odin_Proxy>("odin-proxy")
+    .WaitFor(api)
+    .WithReference(api)
+    .WithExternalHttpEndpoints();
+
 builder.Build().Run();

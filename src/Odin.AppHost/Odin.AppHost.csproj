@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Sdk Name="Aspire.AppHost.Sdk" Version="9.1.0" />
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.2.0" />
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -12,15 +12,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.1.0" />
-    <PackageReference Include="Aspire.Hosting.Azure.AppConfiguration" Version="9.1.0" />
-    <PackageReference Include="Aspire.Hosting.Azure.ApplicationInsights" Version="9.1.0" />
-    <PackageReference Include="Aspire.Hosting.Azure.KeyVault" Version="9.1.0" />
-    <PackageReference Include="Aspire.Hosting.Azure.Storage" Version="9.1.0" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.2.0" />
+    <PackageReference Include="Aspire.Hosting.Azure.AppConfiguration" Version="9.2.0" />
+    <PackageReference Include="Aspire.Hosting.Azure.ApplicationInsights" Version="9.2.0" />
+    <PackageReference Include="Aspire.Hosting.Azure.KeyVault" Version="9.2.0" />
+    <PackageReference Include="Aspire.Hosting.Azure.Storage" Version="9.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Api\Odin.Api\Odin.Api.csproj" />
+    <ProjectReference Include="..\Proxy\Odin.Proxy\Odin.Proxy.csproj" />
   </ItemGroup>
 
 </Project>
