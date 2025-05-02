@@ -8,13 +8,15 @@ internal static class OdinApiResourceBuilderExtensions
     public static IResourceBuilder<T> WithScalarCommand<T>(this IResourceBuilder<T> builder)
         where T : IResourceWithEndpoints
     {
-        builder.WithCommand(
-            name: "scalar-docs",
-            displayName: "Scalar api reference",
+        builder.WithCommand(name: "scalar-docs",
+            displayName: "Scalar API reference",
             executeCommand: context => OnOpenUrlCommandAsync(builder, context, "scalar"),
-            updateState: OnUpdateStateResource,
-            iconName: "AnimalRabbitOff",
-            iconVariant: IconVariant.Filled);
+            commandOptions: new()
+            {
+                IconName = "AnimalRabbitOff",
+                IconVariant = IconVariant.Filled,
+                UpdateState = OnUpdateStateResource,
+            });
 
         return builder;
     }

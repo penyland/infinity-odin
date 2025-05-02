@@ -15,6 +15,8 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.2.1" />
+    <PackageReference Include="Aspire.RabbitMQ.Client" Version="9.2.1" />
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
     <PackageReference Include="Infinity.Toolkit.FeatureModules" Version="1.1.2" />
     <PackageReference Include="Infinity.Toolkit.LogFormatter" Version="1.0.4" />

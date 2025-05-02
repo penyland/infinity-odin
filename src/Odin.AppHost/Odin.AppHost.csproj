@@ -17,11 +17,14 @@
     <PackageReference Include="Aspire.Hosting.Azure.ApplicationInsights" Version="9.2.1" />
     <PackageReference Include="Aspire.Hosting.Azure.KeyVault" Version="9.2.1" />
     <PackageReference Include="Aspire.Hosting.Azure.Storage" Version="9.2.1" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="9.2.1" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="9.2.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Api\Odin.Api\Odin.Api.csproj" />
     <ProjectReference Include="..\Proxy\Odin.Proxy\Odin.Proxy.csproj" />
+    <ProjectReference Include="..\Worker\Odin.WorkerService\Odin.WorkerService.csproj" />
   </ItemGroup>
 
 </Project>

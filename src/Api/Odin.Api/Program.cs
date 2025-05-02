@@ -5,6 +5,7 @@ using Odin.Api.ExceptionHandlers;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.AddRabbitMQClient("Messaging");
 
 // Add services to the container.
 builder.AddFeatureModules();
