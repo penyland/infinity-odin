@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Models;
@@ -8,6 +9,27 @@ using Scalar.AspNetCore;
 using System.Reflection;
 
 namespace Odin.Api.Features.OpenApi;
+
+public record OpenApiOptions
+{
+    public string Instance { get; init; } = string.Empty;
+
+    public string TenantId { get; init; } = string.Empty;
+
+    public string ClientId { get; init; } = string.Empty;
+
+    public string Scopes { get; init; }
+
+    public string[]? ScopesArray => Scopes.Split(" ");
+
+    public IDictionary<string, string> ScopesDictionary => ScopesArray?.ToDictionary(x => x, x => x) ?? [];
+
+    public string AuthorityUrl => $"{Instance}{TenantId}";
+
+    public string AuthorizationUrl => $"{AuthorityUrl}/oauth2/v2.0/authorize";
+
+    public string TokenUrl => $"{AuthorityUrl}/oauth2/v2.0/token";
+}
 
 public class OpenApiModule : IWebFeatureModule
 {
@@ -35,6 +57,7 @@ public class OpenApiModule : IWebFeatureModule
         });
 
         context.Services.Configure<ScalarOptions>(context.Configuration.GetSection("Scalar"));
+        context.Services.Configure<OpenApiOptions>(context.Configuration.GetSection("AzureAd"));
 
         return context;
     }
@@ -43,36 +66,33 @@ public class OpenApiModule : IWebFeatureModule
     {
         if (app.Environment.IsDevelopment())
         {
+            var openApiOptions = app.Services.GetService<IOptions<OpenApiOptions>>();
+
             app.MapOpenApi();
 
-            app.MapScalarApiReference(options =>
+            app.MapScalarApiReference("/", options =>
             {
-                options.WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl);
+                options
+                    .WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl)
 
-                // Set authentication defaults
-                var userImpersonationScope = GetScopes(app.Configuration)?.First(x => x.Contains("user_impersonation"));
-                options.Authentication = new()
-                {
-                    OAuth2 = new()
+                    .WithPreferredScheme("oauth2")
+                    .AddAuthorizationCodeFlow("oauth2", flow =>
                     {
-                        ClientId = app.Configuration.GetValue<string>("AzureAd:ClientId"),
-                        Scopes = [userImpersonationScope ?? ""],
-                    }
-                };
+                        flow.ClientId = openApiOptions?.Value.ClientId;
+                        flow.Pkce = Pkce.Sha256;
+                        flow.SelectedScopes = openApiOptions?.Value.ScopesArray;
+                    });
             });
         }
     }
 
     private static string[] GetScopes(IConfiguration configuration) => configuration.GetValue<string>("AzureAd:Scopes")?.Split(" ") ?? [];
 
-    private sealed class OAuth2SecuritySchemeDefinitionDocumentTransformer(IConfiguration configuration) : IOpenApiDocumentTransformer
+    private sealed class OAuth2SecuritySchemeDefinitionDocumentTransformer(IOptions<OpenApiOptions> options) : IOpenApiDocumentTransformer
     {
         public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
         {
-            var azureAdSection = configuration.GetRequiredSection("AzureAd");
-            var authorityUrl = new Uri($"{azureAdSection["Instance"]}{azureAdSection["TenantId"]}", UriKind.Absolute);
-            var authorizationUrl = new Uri($"{authorityUrl}/oauth2/v2.0/authorize", UriKind.Absolute);
-            var tokenUrl = new Uri($"{authorityUrl}/oauth2/v2.0/token", UriKind.Absolute);
+            var azureAdOptions = options.Value;
 
             var securityScheme = new OpenApiSecurityScheme
             {
@@ -84,9 +104,9 @@ public class OpenApiModule : IWebFeatureModule
                 {
                     AuthorizationCode = new OpenApiOAuthFlow
                     {
-                        AuthorizationUrl = authorizationUrl,
-                        TokenUrl = tokenUrl,
-                        Scopes = azureAdSection.GetValue<string>("Scopes")?.Split(" ").ToDictionary(x => x, x => x),
+                        AuthorizationUrl = new Uri(azureAdOptions.AuthorizationUrl),
+                        TokenUrl = new Uri(azureAdOptions.TokenUrl),
+                        Scopes = azureAdOptions.ScopesDictionary,
                         Extensions = new Dictionary<string, IOpenApiExtension>
                         {
                             ["x-usePkce"] = new OpenApiString("SHA-256")
