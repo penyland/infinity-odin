@@ -42,4 +42,10 @@ var proxy = builder.AddProject<Projects.Odin_Proxy>("odin-proxy")
     .WithReference(api)
     .WithExternalHttpEndpoints();
 
+var angularWeb = builder.AddNpmApp("odin-angular-web", "../Web/Odin.Web.Angular")
+    .WithHttpEndpoint(env: "PORT", port: 4200)
+    .WithReference(api)
+    .WaitFor(api)
+    .WithExternalHttpEndpoints();
+
 builder.Build().Run();
