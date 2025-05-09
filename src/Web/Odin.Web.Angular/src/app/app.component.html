@@ -227,6 +227,13 @@
       </svg>
       <h1>Hello, {{ title }}</h1>
       <p>Congratulations! Your app is running. 🎉</p>
+
+      <p><b>AppVersion</b>: {{ env.appVersion }}</p>
+      <p><b>myVar1</b> : {{ env.myVar1 }}</p>
+      <p><b>myVar2</b>: {{ env.myVar2 }}</p>
+      <p><b>OTEL_EXPORTER_OTLP_ENDPOINT</b>: {{ env.otelExporterOtlpEndpoint }} </p>
+      <p><b>OTEL_EXPORTER_OTLP_HEADERS</b>: {{ env.otelExporterOtlpHeaders }} </p>
+
     </div>
     <div class="divider" role="separator" aria-label="Divider"></div>
     <div class="right-side">
