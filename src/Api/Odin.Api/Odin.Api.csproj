@@ -15,16 +15,16 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.2.1" />
-    <PackageReference Include="Aspire.RabbitMQ.Client" Version="9.2.1" />
+    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.3.0" />
+    <PackageReference Include="Aspire.RabbitMQ.Client" Version="9.3.0" />
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
     <PackageReference Include="Infinity.Toolkit.FeatureModules" Version="1.1.2" />
     <PackageReference Include="Infinity.Toolkit.LogFormatter" Version="1.0.4" />
     <PackageReference Include="Infinity.Toolkit.Messaging" Version="1.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.4" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Identity.Web" Version="3.8.4" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.2.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="3.9.2" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.4.7" />
   </ItemGroup>
 
   <ItemGroup>

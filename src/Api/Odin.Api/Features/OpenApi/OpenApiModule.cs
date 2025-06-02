@@ -74,8 +74,7 @@ public class OpenApiModule : IWebFeatureModule
             {
                 options
                     .WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl)
-
-                    .WithPreferredScheme("oauth2")
+                    .AddPreferredSecuritySchemes("bearer")
                     .AddAuthorizationCodeFlow("oauth2", flow =>
                     {
                         flow.ClientId = openApiOptions?.Value.ClientId;
