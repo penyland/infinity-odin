@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>ff2da902-1117-40bf-a4d0-685fca2658cd</UserSecretsId>
+    <UserSecretsId>Odin.Api</UserSecretsId>
     <RootNamespace>Odin.Api</RootNamespace>
     <RuntimeIdentifiers>linux-x64;</RuntimeIdentifiers>
   </PropertyGroup>
@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Odin.ServiceDefaults\Odin.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\Shared\Odin.ServiceDefaults\Odin.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

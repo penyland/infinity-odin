@@ -1,10 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-Odin.WorkerService-6b96c5c0-a42a-4f05-8ad6-0c8a0f07a7a2</UserSecretsId>
+    <UserSecretsId>Odin.WorkerService</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Odin.ServiceDefaults\Odin.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\Shared\Odin.ServiceDefaults\Odin.ServiceDefaults.csproj" />
   </ItemGroup>
 </Project>

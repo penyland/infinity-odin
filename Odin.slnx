@@ -4,13 +4,13 @@
     <Project Path="src/Api/Odin.Api/Odin.Api.csproj" />
   </Folder>
   <Folder Name="/src/AppHost/">
-    <Project Path="src/Odin.AppHost/Odin.AppHost.csproj" />
+    <Project Path="src/AppHost/Odin.AppHost/Odin.AppHost.csproj" />
   </Folder>
   <Folder Name="/src/Proxy/" Id="02ea681e-c7d8-13c7-8484-4ac65e1b71e8">
     <Project Path="src/Proxy/Odin.Proxy/Odin.Proxy.csproj" Id="bf6aaec2-9ad8-47e7-a227-eb3dfabd1355" />
   </Folder>
   <Folder Name="/src/Shared/">
-    <Project Path="src/Odin.ServiceDefaults/Odin.ServiceDefaults.csproj" />
+    <Project Path="src/Shared/Odin.ServiceDefaults/Odin.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/src/Worker/" Id="d765d0ca-5395-400c-9310-4e38947ec309">
     <Project Path="src/Worker/Odin.WorkerService/Odin.WorkerService.csproj" Id="711550b3-e371-4c75-8b3a-148809b915d4" />

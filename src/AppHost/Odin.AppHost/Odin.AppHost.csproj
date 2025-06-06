@@ -8,7 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsAspireHost>true</IsAspireHost>
-    <UserSecretsId>0988fd5f-9b45-46e3-b5f5-944c9339c946</UserSecretsId>
+    <UserSecretsId>Odin.AppHost</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
