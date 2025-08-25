@@ -1,12 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿//using Microsoft.EntityFrameworkCore;
 
-namespace Odin.WorkerService;
+//namespace Odin.WorkerService;
 
-internal class WorkerDbContext : DbContext
-{
-    public WorkerDbContext(DbContextOptions<WorkerDbContext> options) : base(options)
-    {
-    }
+//internal class WorkerDbContext : DbContext
+//{
+//    public WorkerDbContext(DbContextOptions<WorkerDbContext> options) : base(options)
+//    {
+//    }
 
-    public DbSet<WorkerModel> Workers { get; set; } = null!;
-}
+//    public DbSet<WorkerModel> Workers { get; set; } = null!;
+//}
