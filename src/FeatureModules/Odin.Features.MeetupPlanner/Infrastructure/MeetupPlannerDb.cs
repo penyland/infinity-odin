@@ -23,9 +23,9 @@ public interface IMeetupPlannerDb
 
 public class MeetupPlannerDb(IOptions<DatabaseConnectionOptions> options) : IMeetupPlannerDb
 {
-    private readonly string _connectionString = options.Value.MeetupPlanner;
+    private readonly string connectionString = options.Value.MeetupPlanner;
 
-    private SqlConnection CreateConnection() => new(_connectionString);
+    private SqlConnection CreateConnection() => new(connectionString);
 
     public IDbConnection CreateOpenConnection()
     {

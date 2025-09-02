@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Odin.Features.MeetupPlanner.Infrastructure;
 using System.Reflection;
 
@@ -16,6 +18,8 @@ public class MeetupPlannerModule : IWebFeatureModule
     {
         context.Services.Configure<DatabaseConnectionOptions>(context.Configuration.GetSection("ConnectionStrings"));
         context.Services.AddSingleton<IMeetupPlannerDb, MeetupPlannerDb>();
+
+        context.Services.AddDbContext<MeetupPlannerDbContext>(options => options.UseSqlServer());
 
         return context;
     }
@@ -53,5 +57,37 @@ public class MeetupPlannerModule : IWebFeatureModule
             await database.AddLocationAsync(location);
             return Results.Created($"/location/{location.LocationId}", location);
         });
+
+        app.MapGet("/locations2", async (MeetupPlannerDbContext dbContext) =>
+        {
+            var locations = await dbContext.GetAllLocationsAsync();
+            return Results.Ok(locations);
+        });
+
+        app.MapGet("/locations3", async (MeetupPlannerDbContext dbContext) =>
+        {
+            var locations = await dbContext.Locations.AsNoTracking().ToListAsync();
+            return Results.Ok(locations);
+        });
     }
+}
+
+internal class MeetupPlannerDbContext(IOptions<DatabaseConnectionOptions> options) : DbContext
+{
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseSqlServer(options.Value.MeetupPlanner);
+    }
+
+    public async Task<List<Location>> GetAllLocationsAsync()
+    {
+        var result = await Database.SqlQuery<Location>(
+            $"SELECT * FROM dbo.Locations ORDER BY [Name]")
+            .AsNoTracking()
+            .ToListAsync();
+
+        return result;
+    }
+
+    public DbSet<Location> Locations { get; set; }
 }
