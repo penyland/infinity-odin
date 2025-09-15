@@ -16,6 +16,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <Folder Include="Infrastructure\EFCore\" />
     <Folder Include="MCP\" />
   </ItemGroup>
   

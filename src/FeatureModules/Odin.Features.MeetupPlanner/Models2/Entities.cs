@@ -1,4 +1,4 @@
-namespace Odin.Features.MeetupPlanner.Models;
+namespace Odin.Features.MeetupPlanner.Models2;
 public sealed class Meetup
 {
     public Guid Id { get; set; }

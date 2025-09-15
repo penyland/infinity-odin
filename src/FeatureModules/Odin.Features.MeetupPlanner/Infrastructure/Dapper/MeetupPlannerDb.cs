@@ -1,10 +1,11 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
+using Odin.Features.MeetupPlanner.Models;
 using System.Data;
 using System.Text.Json.Serialization;
 
-namespace Odin.Features.MeetupPlanner.Infrastructure;
+namespace Odin.Features.MeetupPlanner.Infrastructure.Dapper;
 
 public class DatabaseConnectionOptions
 {
@@ -43,7 +44,7 @@ public class MeetupPlannerDb(IOptions<DatabaseConnectionOptions> options) : IMee
             INSERT INTO dbo.Locations (LocationId, Name, Street, City, PostalCode, Country)
             VALUES (@LocationId, @Name, @Street, @City, @PostalCode, @Country)
             """;
-        
+
         using var conn = CreateConnection();
         await conn.ExecuteAsync(sql, location);
 
@@ -69,7 +70,7 @@ public class MeetupPlannerDb(IOptions<DatabaseConnectionOptions> options) : IMee
             SELECT * FROM dbo.Locations
             WHERE City = @City
             """;
-        using var conn = CreateConnection();  
+        using var conn = CreateConnection();
         var result = await conn.QueryAsync<Location>(sql, new { City = city });
         return [.. result];
     }
@@ -80,7 +81,7 @@ public class MeetupPlannerDb(IOptions<DatabaseConnectionOptions> options) : IMee
             SELECT * FROM dbo.Locations
             WHERE LocationId = @LocationId
             """;
-        
+
         using var conn = CreateConnection();
         var result = await conn.QuerySingleOrDefaultAsync<Location>(sql, new { LocationId = locationId });
 
@@ -100,30 +101,30 @@ public class MeetupPlannerDb(IOptions<DatabaseConnectionOptions> options) : IMee
     }
 }
 
-public record Location
-{
-    public Guid LocationId { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Street { get; set; } = string.Empty;
-    public string City { get; set; } = string.Empty;
-    public string PostalCode { get; set; } = string.Empty;
-    public string Country { get; set; } = "SE";
+//public record Location
+//{
+//    public Guid LocationId { get; set; }
+//    public string Name { get; set; } = string.Empty;
+//    public string Street { get; set; } = string.Empty;
+//    public string City { get; set; } = string.Empty;
+//    public string PostalCode { get; set; } = string.Empty;
+//    public string Country { get; set; } = "SE";
 
-    [JsonIgnore]
-    public string? CreatedBy { get; init; }
+//    [JsonIgnore]
+//    public string? CreatedBy { get; init; }
 
-    [JsonIgnore]
-    public DateTimeOffset? CreatedUtc { get; set; }
+//    [JsonIgnore]
+//    public DateTimeOffset? CreatedUtc { get; set; }
 
-    [JsonIgnore]
-    public string? UpdatedBy { get; init; }
-    
-    [JsonIgnore]
-    public DateTimeOffset? UpdatedUtc { get; init; }
-}
+//    [JsonIgnore]
+//    public string? UpdatedBy { get; init; }
+
+//    [JsonIgnore]
+//    public DateTimeOffset? UpdatedUtc { get; init; }
+//}
 
 [JsonSerializable(typeof(Location))]
 [JsonSerializable(typeof(List<Location>))]
-public sealed partial class MeetupPlannerContext : JsonSerializerContext
+public sealed partial class MeetupPlannerDapperContext : JsonSerializerContext
 {
 }

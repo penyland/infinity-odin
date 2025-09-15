@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Odin.Features.MeetupPlanner.Infrastructure;
+using Odin.Features.MeetupPlanner.Infrastructure.Dapper;
+using Odin.Features.MeetupPlanner.Models;
 using System.Reflection;
 
 namespace Odin.Features.MeetupPlanner;
@@ -19,14 +21,15 @@ public class MeetupPlannerModule : IWebFeatureModule
         context.Services.Configure<DatabaseConnectionOptions>(context.Configuration.GetSection("ConnectionStrings"));
         context.Services.AddSingleton<IMeetupPlannerDb, MeetupPlannerDb>();
 
-        context.Services.AddDbContext<MeetupPlannerDbContext>(options => options.UseSqlServer());
+        //context.Services.AddDbContext<MeetupPlannerDbContext>(options => options.UseSqlServer());
+        context.Services.AddDbContext<MeetupPlannerContext>(options => options.UseSqlServer(context.Configuration.GetConnectionString("MeetupPlanner")));
 
         return context;
     }
 
     public void MapEndpoints(WebApplication app)
     {
-        app.MapGet("/locations", async (IMeetupPlannerDb database, [FromQuery] string? city, [FromQuery] string? name) =>
+        app.MapGet("/dapper/locations", async (IMeetupPlannerDb database, [FromQuery] string? city, [FromQuery] string? name) =>
         {
             var hasCity = !string.IsNullOrWhiteSpace(city);
             var hasName = !string.IsNullOrWhiteSpace(name);
@@ -50,7 +53,7 @@ public class MeetupPlannerModule : IWebFeatureModule
             return await database.GetLocationsAsync();
         });
 
-        app.MapPost("/locations", async (IMeetupPlannerDb database, [FromBody] Location location) =>
+        app.MapPost("/dapper/locations", async (IMeetupPlannerDb database, [FromBody] Location location) =>
         {
             // Add validation as needed
 
@@ -58,16 +61,95 @@ public class MeetupPlannerModule : IWebFeatureModule
             return Results.Created($"/location/{location.LocationId}", location);
         });
 
-        app.MapGet("/locations2", async (MeetupPlannerDbContext dbContext) =>
+        app.MapGet("/ef/locations", async (MeetupPlannerContext dbContext) =>
         {
-            var locations = await dbContext.GetAllLocationsAsync();
+            //var locations = await dbContext.GetAllLocationsAsync();
+            var locations = await dbContext.Locations.AsNoTracking().ToListAsync();
+
             return Results.Ok(locations);
         });
 
-        app.MapGet("/locations3", async (MeetupPlannerDbContext dbContext) =>
+        app.MapGet("/meetups", async (MeetupPlannerContext dbContext) =>
         {
-            var locations = await dbContext.Locations.AsNoTracking().ToListAsync();
-            return Results.Ok(locations);
+            //var meetups = await dbContext.Meetups.AsNoTracking().ToListAsync();
+            var meetups = await dbContext.Meetups.ToListAsync();
+            return Results.Ok(meetups);
+        });
+
+        app.MapGet("/meetups/{id}", async (MeetupPlannerContext dbContext, Guid meetupId) =>
+        {
+            //if (!Guid.TryParse(id, out var meetupId))
+            //{
+            //    return Results.BadRequest("Invalid ID format.");
+            //}
+
+            //var meetup = await dbContext.Meetups
+            //    .AsNoTracking()
+            //    .FirstOrDefaultAsync(m => m.MeetupId == meetupId);
+
+            var meetup = await dbContext.Meetups
+                .Include(m => m.Location)
+                .Include(m => m.ScheduleSlots)
+                .ThenInclude(s => s.Presentation)
+                .ThenInclude(p => p.PresentationSpeakers)
+                .ThenInclude(ps => ps.Speaker)
+                .ThenInclude(sb => sb.Bios)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.MeetupId == meetupId);
+
+            if (meetup == null)
+            {
+                return Results.NotFound();
+            }
+
+            //var speakerBios  = dbContext.SpeakerBios.AsNoTracking();
+
+            var presentations = meetup.ScheduleSlots
+                .Where(slot => slot.Presentation != null)
+                .Select(slot => slot.Presentation)
+                .ToList();
+
+            var response = new MeetupDto(
+                meetup.MeetupId,
+                meetup.Title,
+                meetup.Description,
+                meetup.StartUtc,
+                meetup.EndUtc,
+                new RsvpDto(
+                    meetup.TotalSpots ?? 0,
+                    meetup.RsvpYesCount ?? 0,
+                    meetup.RsvpNoCount ?? 0,
+                    meetup.RsvpWaitlistCount ?? 0,
+                    meetup.AttendanceCount ?? 0),
+                new LocationDto(
+                    meetup.Location.LocationId,
+                    meetup.Location.Name,
+                    meetup.Location.Street,
+                    meetup.Location.City,
+                    meetup.Location.PostalCode,
+                    meetup.Location.Country,
+                    meetup.Location.Description
+                    ),
+                [.. presentations.Select(p => new PresentationDto(
+                    p.PresentationId,
+                    p.Title,
+                    p.Abstract,
+                    [.. p.PresentationSpeakers
+                        .Select(ps => ps.Speaker)
+                        .Where(s => s != null)
+                        .Select(s => new SpeakerDto(
+                            s.SpeakerId,
+                            s.FullName,
+                            s.Company,
+                            s.TwitterUrl,
+                            s.GitHubUrl,
+                            s.LinkedInUrl,
+                            s.Bios.FirstOrDefault(b => b.IsPrimary)?.Bio
+                            ))
+                        ]))
+                ]);
+
+            return response != null ? Results.Json(response) : Results.NotFound();
         });
     }
 }
@@ -91,3 +173,49 @@ internal class MeetupPlannerDbContext(IOptions<DatabaseConnectionOptions> option
 
     public DbSet<Location> Locations { get; set; }
 }
+
+public record MeetupDto(
+    Guid MeetupId,
+    string Title,
+    string Description,
+    DateTimeOffset StartUtc,
+    DateTimeOffset EndUtc,
+    RsvpDto Rsvp,
+    LocationDto Location,
+    List<PresentationDto> Presentations
+);
+
+public record PresentationDto(
+    Guid PresentationId,
+    string Title,
+    string Abstract,
+    List<SpeakerDto> Speakers
+);
+
+public record SpeakerDto(
+    Guid SpeakerId,
+    string FullName,
+    string? Company,
+    string? TwitterUrl,
+    string? GitHubUrl,
+    string? LinkedInUrl,
+    string? Bio
+);
+
+public record LocationDto(
+    Guid LocationId,
+    string Name,
+    string Street,
+    string City,
+    string PostalCode,
+    string Country,
+    string Description
+);
+
+public record RsvpDto(
+    int TotalSpots,
+    int RsvpYesCount,
+    int RsvpNoCount,
+    int RsvpWaitlistCount,
+    int AttendanceCount
+    );

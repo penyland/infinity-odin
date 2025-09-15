@@ -1,9 +1,11 @@
 ﻿using ModelContextProtocol.Server;
 using Odin.Features.MeetupPlanner.Infrastructure;
+using Odin.Features.MeetupPlanner.Infrastructure.Dapper;
+using Odin.Features.MeetupPlanner.Models;
 using System.ComponentModel;
 using System.Text.Json;
 
-namespace MeetupPlanner;
+namespace Odin.Features.MeetupPlanner.MCP;
 
 [McpServerToolType]
 public class MeetupPlannerMcpTools(IMeetupPlannerDb meetupPlannerDb)
@@ -14,14 +16,14 @@ public class MeetupPlannerMcpTools(IMeetupPlannerDb meetupPlannerDb)
     public async Task<string> GetLocationsAsync()
     {
         var locations = await meetupPlannerDb.GetLocationsAsync();
-        return JsonSerializer.Serialize(locations, MeetupPlannerContext.Default.ListLocation);
+        return JsonSerializer.Serialize(locations, MeetupPlannerDapperContext.Default.ListLocation);
     }
 
     [McpServerTool, Description("Get a list of locations where meetups have been or will be in a given city")]
     public async Task<string> GetLocationsByCityAsync([Description("The name of the city")] string city)
     {
         var locations = await meetupPlannerDb.GetLocationsByCityAsync(city);
-        return JsonSerializer.Serialize(locations, MeetupPlannerContext.Default.ListLocation);
+        return JsonSerializer.Serialize(locations, MeetupPlannerDapperContext.Default.ListLocation);
     }
 
     [McpServerTool, Description("Get a list of locations where meetups have been or will be with a given name")]
