@@ -1,18 +1,8 @@
-﻿//using Odin.Api.Features.OpenApi;
-using System.Reflection;
-
-namespace Odin.Api.Features.Messaging;
+﻿namespace Odin.Api.Features.Messaging;
 
 public class MessagingModule : WebFeatureModule
 {
-    public override IModuleInfo ModuleInfo { get; } = new FeatureModuleInfo(typeof(MessagingModule).FullName, Assembly.GetExecutingAssembly().GetName().Version?.ToString());
-
     public override void MapEndpoints(WebApplication app) => app.MapMessagingEndpoints();
-
-    public override ModuleContext RegisterModule(ModuleContext context)
-    {
-        return context;
-    }
 }
 
 public static class MessagingEndpoints

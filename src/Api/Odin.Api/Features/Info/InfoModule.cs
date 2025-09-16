@@ -16,8 +16,6 @@ public class InfoModule : WebFeatureModule
 
 public static class InfoEndpoints
 {
-    private static readonly string[] ForbiddenKeys = ["ConnectionString", "Auth", "Secret"];
-
     public static RouteGroupBuilder MapInfoEndpoints(this IEndpointRouteBuilder builder)
     {
         var group = builder.MapGroup("/info")
@@ -29,8 +27,8 @@ public static class InfoEndpoints
             .Produces<Info>(StatusCodes.Status200OK);
 
         group.MapGet("/config", GetConfig)
-            .Produces<string>(StatusCodes.Status200OK);
-            //.RequireAuthorization();
+            .Produces<string>(StatusCodes.Status200OK)
+            .RequireAuthorization();
 
         group.MapGet("/modules", GetFeatureModuleInfos)
             .Produces<IEnumerable<FeatureModuleInfo>>(StatusCodes.Status200OK)
@@ -65,6 +63,8 @@ public static class InfoEndpoints
 
     private static ContentHttpResult GetConfig(IConfiguration configuration)
     {
+        string[] ForbiddenKeys = ["ConnectionString", "Auth", "Secret"];
+
         var configInfo = (configuration as IConfigurationRoot)!.GetDebugView(context => context switch
         {
             { ConfigurationProvider: AzureKeyVaultConfigurationProvider } => "******",

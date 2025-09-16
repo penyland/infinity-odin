@@ -3,32 +3,25 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Odin.Features.MeetupPlanner.Infrastructure.Dapper;
 using Odin.Features.MeetupPlanner.Models;
-using System.Reflection;
 
 namespace Odin.Features.MeetupPlanner;
 
-public class MeetupPlannerModule : IWebFeatureModule
+public class MeetupPlannerModule : WebFeatureModule
 {
-    public IModuleInfo ModuleInfo { get; } = new FeatureModuleInfo(typeof(MeetupPlannerModule).FullName, Assembly.GetExecutingAssembly().GetName().Version?.ToString());
-
-    public ModuleContext RegisterModule(ModuleContext context)
+    public override void RegisterModule(WebApplicationBuilder builder)
     {
-        context.Services.Configure<DatabaseConnectionOptions>(context.Configuration.GetSection("ConnectionStrings"));
-        context.Services.AddSingleton<IMeetupPlannerDb, MeetupPlannerDb>();
+        builder.Services.Configure<DatabaseConnectionOptions>(builder.Configuration.GetSection("ConnectionStrings"));
+        builder.Services.AddSingleton<IMeetupPlannerDb, MeetupPlannerDb>();
 
-        //context.Services.AddDbContext<MeetupPlannerDbContext>(options => options.UseSqlServer());
-        //context.AddSqlServerClient("AZURE_SQL_CONNECTIONSTRING");
-        context.Services.AddDbContext<MeetupPlannerContext>(options => options.UseSqlServer(context.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")));
-
-        return context;
+        builder.AddSqlServerDbContext<MeetupPlannerContext>("AZURE_SQL_CONNECTIONSTRING");
     }
 
-    public void MapEndpoints(WebApplication app)
+    public override void MapEndpoints(WebApplication app)
     {
         var group = app.MapGroup("/meetupplanner")
             .WithTags("Meetup Planner");

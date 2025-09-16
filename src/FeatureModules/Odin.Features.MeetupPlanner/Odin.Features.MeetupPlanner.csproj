@@ -7,8 +7,9 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="9.4.2" />
     <PackageReference Include="Dapper" Version="2.1.66" />
-    <PackageReference Include="Infinity.Toolkit.FeatureModules" Version="1.1.4" />
+    <PackageReference Include="Infinity.Toolkit.FeatureModules" Version="1.2.1" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.9" />
@@ -16,7 +17,6 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Folder Include="Infrastructure\EFCore\" />
     <Folder Include="MCP\" />
   </ItemGroup>
   

@@ -35,20 +35,21 @@ public class OpenApiModule : IWebFeatureModule
 {
     public IModuleInfo ModuleInfo { get; } = new FeatureModuleInfo(typeof(OpenApiModule).FullName, Assembly.GetExecutingAssembly().GetName().Version?.ToString());
 
-    public ModuleContext RegisterModule(ModuleContext context)
+
+    public void RegisterModule(WebApplicationBuilder builder)
     {
-        context.Services.AddOpenApi(options =>
+        builder.Services.AddOpenApi(options =>
         {
             options.AddDocumentTransformer((document, serviceProvider, _) =>
-            {
-                document.Info.Title = context.Configuration["OpenApi:Info:Title"];
-                document.Info.Version = $"Version {Assembly.GetExecutingAssembly().GetName().Version?.ToString()}";
-                document.Info.Description = $"{context.Configuration["OpenApi:Info:Description"]} - Environment: {context.Environment.EnvironmentName}";
-                document.Info.Extensions.Add("Environment", new OpenApiString(context.Environment.EnvironmentName));
+                {
+                    document.Info.Title = builder.Configuration["OpenApi:Info:Title"];
+                    document.Info.Version = $"Version {Assembly.GetExecutingAssembly().GetName().Version?.ToString()}";
+                    document.Info.Description = $"{builder.Configuration["OpenApi:Info:Description"]} - Environment: {builder.Environment.EnvironmentName}";
+                    document.Info.Extensions.Add("Environment", new OpenApiString(builder.Environment.EnvironmentName));
 
-                document.Servers = [];
-                return Task.CompletedTask;
-            });
+                    document.Servers = [];
+                    return Task.CompletedTask;
+                });
 
             options.AddDocumentTransformer<OAuth2SecuritySchemeDefinitionDocumentTransformer>();
             options.AddDocumentTransformer<BearerSecuritySchemeDefinitionDocumentTransformer>();
@@ -56,10 +57,8 @@ public class OpenApiModule : IWebFeatureModule
             options.AddOperationTransformer<SecuritySchemeOperationTransformer>();
         });
 
-        context.Services.Configure<ScalarOptions>(context.Configuration.GetSection("Scalar"));
-        context.Services.Configure<OpenApiOptions>(context.Configuration.GetSection("AzureAd"));
-
-        return context;
+        builder.Services.Configure<ScalarOptions>(builder.Configuration.GetSection("Scalar"));
+        builder.Services.Configure<OpenApiOptions>(builder.Configuration.GetSection("AzureAd"));
     }
 
     public void MapEndpoints(WebApplication app)
@@ -74,13 +73,13 @@ public class OpenApiModule : IWebFeatureModule
             {
                 options
                     .WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl)
-                    .AddPreferredSecuritySchemes("bearer")
-                    .AddAuthorizationCodeFlow("oauth2", flow =>
-                    {
-                        flow.ClientId = openApiOptions?.Value.ClientId;
-                        flow.Pkce = Pkce.Sha256;
-                        flow.SelectedScopes = openApiOptions?.Value.ScopesArray;
-                    });
+                                .AddPreferredSecuritySchemes("bearer")
+                                .AddAuthorizationCodeFlow("oauth2", flow =>
+                                {
+                                    flow.ClientId = openApiOptions?.Value.ClientId;
+                                    flow.Pkce = Pkce.Sha256;
+                                    flow.SelectedScopes = openApiOptions?.Value.ScopesArray;
+                                });
             });
         }
     }
