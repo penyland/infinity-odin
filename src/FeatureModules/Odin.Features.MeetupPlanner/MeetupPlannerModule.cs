@@ -22,6 +22,7 @@ public class MeetupPlannerModule : IWebFeatureModule
         context.Services.AddSingleton<IMeetupPlannerDb, MeetupPlannerDb>();
 
         //context.Services.AddDbContext<MeetupPlannerDbContext>(options => options.UseSqlServer());
+        //context.AddSqlServerClient("AZURE_SQL_CONNECTIONSTRING");
         context.Services.AddDbContext<MeetupPlannerContext>(options => options.UseSqlServer(context.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")));
 
         return context;
@@ -68,7 +69,17 @@ public class MeetupPlannerModule : IWebFeatureModule
         {
             var locations = await dbContext.Locations.AsNoTracking().ToListAsync();
 
-            return Results.Json(locations);
+            // Map to LocationDTO
+            var response = locations.Select(l => new LocationDto(
+                l.LocationId,
+                l.Name,
+                l.Street,
+                l.City,
+                l.PostalCode,
+                l.Country,
+                l.Description));
+
+            return Results.Json(response);
         });
 
         group.MapGet("/locations/{locationId}", async (MeetupPlannerContext dbContext, Guid locationId) =>
@@ -76,7 +87,17 @@ public class MeetupPlannerModule : IWebFeatureModule
             var location = await dbContext.Locations
                 .AsNoTracking()
                 .FirstOrDefaultAsync(l => l.LocationId == locationId);
-            return location != null ? Results.Json(location) : Results.NotFound();
+
+            var response = location != null ? new LocationDto(
+                location.LocationId,
+                location.Name,
+                location.Street,
+                location.City,
+                location.PostalCode,
+                location.Country,
+                location.Description) : null;
+
+            return response != null ? Results.Json(response) : Results.NotFound();
         });
 
         group.MapGet("/meetups", async (MeetupPlannerContext dbContext) =>
@@ -180,6 +201,24 @@ public class MeetupPlannerModule : IWebFeatureModule
                 ]);
 
             return response != null ? Results.Json(response) : Results.NotFound();
+        });
+
+        group.MapGet("/meetups/{meetupId}/rsvps", async (MeetupPlannerContext dbContext, Guid meetupId) =>
+        {
+            var meetup = await dbContext.Meetups
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.MeetupId == meetupId);
+            if (meetup == null)
+            {
+                return Results.NotFound();
+            }
+            var rsvp = new RsvpDto(
+                meetup.TotalSpots ?? 0,
+                meetup.RsvpYesCount ?? 0,
+                meetup.RsvpNoCount ?? 0,
+                meetup.RsvpWaitlistCount ?? 0,
+                meetup.AttendanceCount ?? 0);
+            return Results.Ok(rsvp);
         });
 
         group.MapGet("/presentations", async (MeetupPlannerContext dbContext) =>

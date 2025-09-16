@@ -10,8 +10,8 @@
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Infinity.Toolkit.FeatureModules" Version="1.1.4" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.9" />
     <PackageReference Include="ModelContextProtocol" Version="0.3.0-preview.4" />
   </ItemGroup>
   

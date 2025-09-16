@@ -2,21 +2,23 @@ using Odin.AppHost;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-var postgres = builder.AddPostgres("postgres")
-    .WithContainerName("odin-postgres")
-    .WithLifetime(ContainerLifetime.Persistent)
-    .WithPgWeb()
-    .AddDatabase("Database", "Odin");
+var sqlDb = builder.AddConnectionString("sqlDb");
 
-var rabbitmq = builder.AddRabbitMQ("RabbitMQ", port: 5672)
-    .WithContainerName("odin-rabbitmq")
-    .WithLifetime(ContainerLifetime.Persistent)
-    .WithManagementPlugin(15672)
-    .WithUrlForEndpoint("management", url =>
-    {
-        url.DisplayText = "Admin";
-        url.DisplayOrder = 1;
-    });
+//var postgres = builder.AddPostgres("postgres")
+//    .WithContainerName("odin-postgres")
+//    .WithLifetime(ContainerLifetime.Persistent)
+//    .WithPgWeb()
+//    .AddDatabase("Database", "Odin");
+
+//var rabbitmq = builder.AddRabbitMQ("RabbitMQ", port: 5672)
+//    .WithContainerName("odin-rabbitmq")
+//    .WithLifetime(ContainerLifetime.Persistent)
+//    .WithManagementPlugin(15672)
+//    .WithUrlForEndpoint("management", url =>
+//    {
+//        url.DisplayText = "Admin";
+//        url.DisplayOrder = 1;
+//    });
 
 var storage = builder.AddAzureStorage("odin-storage")
     .RunAsEmulator(r =>
@@ -29,13 +31,14 @@ var storage = builder.AddAzureStorage("odin-storage")
     .AddTables("odin-tables");
 
 var api = builder.AddProject<Projects.Odin_Api>("odin-api")
-    .WithReference(rabbitmq, "Messaging").WaitFor(rabbitmq)
+    //.WithReference(rabbitmq, "Messaging").WaitFor(rabbitmq)
     .WithReference(storage).WaitFor(storage)
+    .WithReference(sqlDb, "AZURE_SQL_CONNECTIONSTRING")
     .WithScalarCommand();
 
-var worker = builder.AddProject<Projects.Odin_WorkerService>("odin-worker")
-    .WithReference(postgres, "Postgres").WaitFor(postgres)
-    .WithReference(rabbitmq, "Messaging").WaitFor(rabbitmq);
+//var worker = builder.AddProject<Projects.Odin_WorkerService>("odin-worker")
+//    .WithReference(postgres, "Postgres").WaitFor(postgres)
+//    .WithReference(rabbitmq, "Messaging").WaitFor(rabbitmq);
 
 var proxy = builder.AddProject<Projects.Odin_Proxy>("odin-proxy")
     .WaitFor(api)
