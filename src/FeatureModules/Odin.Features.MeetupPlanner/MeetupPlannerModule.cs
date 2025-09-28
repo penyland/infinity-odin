@@ -1,4 +1,6 @@
-﻿using Infinity.Toolkit.FeatureModules;
+﻿using Infinity.Toolkit;
+using Infinity.Toolkit.FeatureModules;
+using Infinity.Toolkit.Handlers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Odin.Features.MeetupPlanner.GetMeetups;
 using Odin.Features.MeetupPlanner.Infrastructure.Dapper;
 using Odin.Features.MeetupPlanner.Models;
 
@@ -18,7 +21,11 @@ public class MeetupPlannerModule : WebFeatureModule
         builder.Services.Configure<DatabaseConnectionOptions>(builder.Configuration.GetSection("ConnectionStrings"));
         builder.Services.AddSingleton<IMeetupPlannerDb, MeetupPlannerDb>();
 
-        builder.AddSqlServerDbContext<MeetupPlannerContext>("AZURE_SQL_CONNECTIONSTRING");
+        //builder.AddSqlServerDbContext<MeetupPlannerContext>("AZURE_SQL_CONNECTIONSTRING");
+        builder.AddSqlServerDbContext<MeetupPlannerContext>("MeetupPlanner");
+
+        builder.Services.AddRequestHandler<IReadOnlyCollection<MeetupDto>, GetMeetupsHandler>();
+        builder.Services.AddRequestHandler<GetMeetupFromIdRequest, MeetupDto, GetMeetupHandler>();
     }
 
     public override void MapEndpoints(WebApplication app)
@@ -93,107 +100,59 @@ public class MeetupPlannerModule : WebFeatureModule
             return response != null ? Results.Json(response) : Results.NotFound();
         });
 
-        group.MapGet("/meetups", async (MeetupPlannerContext dbContext) =>
+        group.MapGet("/meetups", async (IRequestHandler<IReadOnlyCollection<MeetupDto>> handler) =>
         {
-            //var meetups = await dbContext.Meetups.AsNoTracking().ToListAsync();
-            var meetups = await dbContext.Meetups
-                .Include(m => m.Location)
-                .AsNoTracking()
-                .ToListAsync();
+            var response = await handler.HandleAsync();
 
-            var response = meetups.Select(m => new
-            {
-                m.MeetupId,
-                m.Title,
-                m.Description,
-                m.StartUtc,
-                m.EndUtc,
-                Rsvp = new
-                {
-                    TotalSpots = m.TotalSpots ?? 0,
-                    RsvpYesCount = m.RsvpYesCount ?? 0,
-                    RsvpNoCount = m.RsvpNoCount ?? 0,
-                    RsvpWaitlistCount = m.RsvpWaitlistCount ?? 0,
-                    AttendanceCount = m.AttendanceCount ?? 0
-                },
-                Location = new
-                {
-                    m.Location.LocationId,
-                    m.Location.Name,
-                    m.Location.Street,
-                    m.Location.City,
-                    m.Location.PostalCode,
-                    m.Location.Country,
-                    m.Location.Description
-                }
-            });
+            return response is Failure ?
+                Results.Problem(response.ToProblemDetails()) :
+                Results.Json(response.Value);
+        })
+        .Produces<IReadOnlyCollection<MeetupDto>>(200);
 
-            return Results.Ok(response);
+        //group.MapGetQuery<Guid, MeetupDto>("/meetupss/{meetupId}")
+        //    .Produces<MeetupDto>()
+        //    .Produces(400);
+
+        group.MapGet("/meetups/{meetupId}", async (IRequestHandler<GetMeetupFromIdRequest, MeetupDto> handler, Guid meetupId) =>
+        {
+            var response = await handler.HandleAsync(new HandlerContext<GetMeetupFromIdRequest>() { Request = new GetMeetupFromIdRequest(meetupId) });
+
+            return response is Failure ? Results.Problem(response.ToProblemDetails()) : Results.Json(response.Value);
         });
 
-        group.MapGet("/meetups/{meetupId}", async (MeetupPlannerContext dbContext, Guid meetupId) =>
+        // GetPresentationsFromMeetupId
+        group.MapGet("/meetups/{meetupId}/presentations", async (MeetupPlannerContext dbContext, Guid meetupId) =>
         {
-            var meetup = await dbContext.Meetups
-                .Include(m => m.Location)
-                .Include(m => m.ScheduleSlots)
-                .ThenInclude(s => s.Presentation)
+            var presentations = await dbContext.ScheduleSlots
+                .Where(s => s.MeetupId == meetupId && s.Presentation != null)
+                .Include(s => s.Presentation)
                 .ThenInclude(p => p.PresentationSpeakers)
                 .ThenInclude(ps => ps.Speaker)
                 .ThenInclude(sb => sb.Bios)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.MeetupId == meetupId);
-
-            if (meetup == null)
+                .Select(s => s.Presentation)
+                .ToListAsync();
+            if (presentations == null || presentations.Count == 0)
             {
                 return Results.NotFound();
             }
-
-            var presentations = meetup.ScheduleSlots
-                .Where(slot => slot.Presentation != null)
-                .Select(slot => slot.Presentation)
-                .ToList();
-
-            var response = new MeetupDto(
-                meetup.MeetupId,
-                meetup.Title,
-                meetup.Description,
-                meetup.StartUtc,
-                meetup.EndUtc,
-                new RsvpDto(
-                    meetup.TotalSpots ?? 0,
-                    meetup.RsvpYesCount ?? 0,
-                    meetup.RsvpNoCount ?? 0,
-                    meetup.RsvpWaitlistCount ?? 0,
-                    meetup.AttendanceCount ?? 0),
-                new LocationDto(
-                    meetup.Location.LocationId,
-                    meetup.Location.Name,
-                    meetup.Location.Street,
-                    meetup.Location.City,
-                    meetup.Location.PostalCode,
-                    meetup.Location.Country,
-                    meetup.Location.Description
-                    ),
-                [.. presentations.Select(p => new PresentationDto(
-                    p.PresentationId,
-                    p.Title,
-                    p.Abstract,
-                    [.. p.PresentationSpeakers
-                        .Select(ps => ps.Speaker)
-                        .Where(s => s != null)
-                        .Select(s => new SpeakerDto(
-                            s.SpeakerId,
-                            s.FullName,
-                            s.Company,
-                            s.TwitterUrl,
-                            s.GitHubUrl,
-                            s.LinkedInUrl,
-                            s.Bios.FirstOrDefault(b => b.IsPrimary)?.Bio
-                            ))
-                        ]))
-                ]);
-
-            return response != null ? Results.Json(response) : Results.NotFound();
+            var response = presentations.Select(p => new PresentationDto(
+                p.PresentationId,
+                p.Title,
+                p.Abstract,
+                p.PresentationSpeakers
+                    .Where(ps => ps.Speaker != null)
+                    .Select(ps => ps.Speaker)
+                    .Select(s => new SpeakerDto(
+                        s.SpeakerId,
+                        s.FullName,
+                        s.Company,
+                        s.TwitterUrl,
+                        s.GitHubUrl,
+                        s.LinkedInUrl,
+                        s.Bios.FirstOrDefault(b => b.IsPrimary)?.Bio)).ToList()));
+            return Results.Ok(response);
         });
 
         group.MapGet("/meetups/{meetupId}/rsvps", async (MeetupPlannerContext dbContext, Guid meetupId) =>
@@ -201,16 +160,19 @@ public class MeetupPlannerModule : WebFeatureModule
             var meetup = await dbContext.Meetups
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.MeetupId == meetupId);
+
             if (meetup == null)
             {
                 return Results.NotFound();
             }
+
             var rsvp = new RsvpDto(
                 meetup.TotalSpots ?? 0,
                 meetup.RsvpYesCount ?? 0,
                 meetup.RsvpNoCount ?? 0,
                 meetup.RsvpWaitlistCount ?? 0,
                 meetup.AttendanceCount ?? 0);
+
             return Results.Ok(rsvp);
         });
 
@@ -281,6 +243,7 @@ internal class MeetupPlannerDbContext(IOptions<DatabaseConnectionOptions> option
 
     public DbSet<Location> Locations { get; set; }
 }
+
 
 public record MeetupDto(
     Guid MeetupId,
