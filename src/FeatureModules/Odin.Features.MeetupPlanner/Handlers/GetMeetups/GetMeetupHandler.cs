@@ -3,7 +3,7 @@ using Infinity.Toolkit.Handlers;
 using Microsoft.EntityFrameworkCore;
 using Odin.Features.MeetupPlanner.Models;
 
-namespace Odin.Features.MeetupPlanner.GetMeetups;
+namespace Odin.Features.MeetupPlanner.Handlers.GetMeetups;
 
 public record GetMeetupFromIdRequest(Guid MeetupId);
 
