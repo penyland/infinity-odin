@@ -73,13 +73,14 @@ public class OpenApiModule : IWebFeatureModule
             {
                 options
                     .WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl)
-                                .AddPreferredSecuritySchemes("bearer")
-                                .AddAuthorizationCodeFlow("oauth2", flow =>
-                                {
-                                    flow.ClientId = openApiOptions?.Value.ClientId;
-                                    flow.Pkce = Pkce.Sha256;
-                                    flow.SelectedScopes = openApiOptions?.Value.ScopesArray;
-                                });
+                    .AddPreferredSecuritySchemes("bearer")
+                    .AddAuthorizationCodeFlow("oauth2", flow =>
+                    {
+                        flow.ClientId = openApiOptions?.Value.ClientId;
+                        flow.Pkce = Pkce.Sha256;
+                        flow.SelectedScopes = openApiOptions?.Value.ScopesArray;
+                    })
+                    .AddDefaultScopes("oauth2", GetScopes(app.Configuration));
             });
         }
     }
