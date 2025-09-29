@@ -7,9 +7,11 @@ namespace Odin.Features.MeetupPlanner.GetMeetups;
 
 public record GetMeetupFromIdRequest(Guid MeetupId);
 
-internal class GetMeetupHandler(MeetupPlannerContext dbContext) : IRequestHandler<GetMeetupFromIdRequest, MeetupDto>
+public record GetMeetupFromIdResponse(MeetupDto Meetup);
+
+internal class GetMeetupHandler(MeetupPlannerContext dbContext) : IRequestHandler<GetMeetupFromIdRequest, GetMeetupFromIdResponse>
 {
-    public async Task<Result<MeetupDto>> HandleAsync(IHandlerContext<GetMeetupFromIdRequest> context, CancellationToken cancellationToken)
+    public async Task<Result<GetMeetupFromIdResponse>> HandleAsync(IHandlerContext<GetMeetupFromIdRequest> context, CancellationToken cancellationToken)
     {
         try
         {
@@ -63,12 +65,11 @@ internal class GetMeetupHandler(MeetupPlannerContext dbContext) : IRequestHandle
                             .ToList()))
                 .FirstOrDefaultAsync(cancellationToken);
 
-
-            return meetup == null ? Result.Failure<MeetupDto>("No meetup found") : Result.Success(meetup);
+            return meetup == null ? Result.Failure<GetMeetupFromIdResponse>("No meetup found") : Result.Success(new GetMeetupFromIdResponse(meetup));
         }
         catch (Exception ex)
         {
-            return Result.Failure<MeetupDto>(ex);
+            return Result.Failure<GetMeetupFromIdResponse>(ex);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Infinity.Toolkit;
+using Infinity.Toolkit.AspNetCore;
 using Infinity.Toolkit.FeatureModules;
 using Infinity.Toolkit.Handlers;
 using Microsoft.AspNetCore.Builder;
@@ -21,11 +22,10 @@ public class MeetupPlannerModule : WebFeatureModule
         builder.Services.Configure<DatabaseConnectionOptions>(builder.Configuration.GetSection("ConnectionStrings"));
         builder.Services.AddSingleton<IMeetupPlannerDb, MeetupPlannerDb>();
 
-        //builder.AddSqlServerDbContext<MeetupPlannerContext>("AZURE_SQL_CONNECTIONSTRING");
         builder.AddSqlServerDbContext<MeetupPlannerContext>("MeetupPlanner");
 
-        builder.Services.AddRequestHandler<IReadOnlyCollection<MeetupDto>, GetMeetupsHandler>();
-        builder.Services.AddRequestHandler<GetMeetupFromIdRequest, MeetupDto, GetMeetupHandler>();
+        builder.Services.AddRequestHandler<GetMeetupsRequest, GetMeetupsResponse, GetMeetupsHandler>();
+        builder.Services.AddRequestHandler<GetMeetupFromIdRequest, GetMeetupFromIdResponse, GetMeetupHandler>();
     }
 
     public override void MapEndpoints(WebApplication app)
@@ -56,14 +56,6 @@ public class MeetupPlannerModule : WebFeatureModule
 
             return await database.GetLocationsAsync();
         });
-
-        //group.MapPost("/dapper/locations", async (IMeetupPlannerDb database, [FromBody] Location location) =>
-        //{
-        //    // Add validation as needed
-
-        //    await database.AddLocationAsync(location);
-        //    return Results.Created($"/location/{location.LocationId}", location);
-        //});
 
         group.MapGet("/locations", async (MeetupPlannerContext dbContext) =>
         {
@@ -100,26 +92,37 @@ public class MeetupPlannerModule : WebFeatureModule
             return response != null ? Results.Json(response) : Results.NotFound();
         });
 
-        group.MapGet("/meetups", async (IRequestHandler<IReadOnlyCollection<MeetupDto>> handler) =>
+        group.MapGet("/meetups", async (IRequestHandler<GetMeetupsRequest, GetMeetupsResponse> handler, [FromQuery] string? status) =>
         {
-            var response = await handler.HandleAsync();
+            if (status is not null)
+            {
+                // Validate status
+                var valid = status.ToLowerInvariant() switch
+                {
+                    "proposed" or
+                    "scheduled" or
+                    "completed" or
+                    "cancelled" => true,
+                    _ => false
+                };
+
+                if (!valid)
+                {
+                    return Results.BadRequest();
+                }
+            }
+
+            var response = await handler.HandleAsync(new HandlerContext<GetMeetupsRequest> { Request = new GetMeetupsRequest(status) });
 
             return response is Failure ?
                 Results.Problem(response.ToProblemDetails()) :
-                Results.Json(response.Value);
+                Results.Json(response.Value.Meetups);
         })
         .Produces<IReadOnlyCollection<MeetupDto>>(200);
 
-        //group.MapGetQuery<Guid, MeetupDto>("/meetupss/{meetupId}")
-        //    .Produces<MeetupDto>()
-        //    .Produces(400);
-
-        group.MapGet("/meetups/{meetupId}", async (IRequestHandler<GetMeetupFromIdRequest, MeetupDto> handler, Guid meetupId) =>
-        {
-            var response = await handler.HandleAsync(new HandlerContext<GetMeetupFromIdRequest>() { Request = new GetMeetupFromIdRequest(meetupId) });
-
-            return response is Failure ? Results.Problem(response.ToProblemDetails()) : Results.Json(response.Value);
-        });
+        group.MapGetQuery<GetMeetupFromIdRequest, GetMeetupFromIdResponse>("/meetups/{meetupId}")
+            .Produces<MeetupDto>()
+            .Produces(400);
 
         // GetPresentationsFromMeetupId
         group.MapGet("/meetups/{meetupId}/presentations", async (MeetupPlannerContext dbContext, Guid meetupId) =>

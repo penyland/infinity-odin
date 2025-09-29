@@ -5,21 +5,31 @@ using Odin.Features.MeetupPlanner.Models;
 
 namespace Odin.Features.MeetupPlanner.GetMeetups;
 
-internal class GetMeetupsHandler(MeetupPlannerContext dbContext) : IRequestHandler<IReadOnlyCollection<MeetupDto>>
+public record GetMeetupsRequest(string? Status);
+
+public record GetMeetupsResponse(IReadOnlyCollection<MeetupDto> Meetups);
+
+internal class GetMeetupsHandler(MeetupPlannerContext dbContext) : IRequestHandler<GetMeetupsRequest, GetMeetupsResponse>
 {
-    public async Task<Result<IReadOnlyCollection<MeetupDto>>> HandleAsync(CancellationToken cancellationToken)
+    public async Task<Result<GetMeetupsResponse>> HandleAsync(IHandlerContext<GetMeetupsRequest> context, CancellationToken cancellationToken = default)
     {
         try
         {
-            var meetups = await dbContext.Meetups
+            var query = dbContext.Meetups
                 .Include(m => m.Location)
                 .OrderBy(m => m.StartUtc)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(context.Request.Status))
+            {
+                query = query.Where(e => e.Status == context.Request.Status);
+            }
+
+            var meetups = await query
                 .AsNoTracking()
                 .ToListAsync(cancellationToken: cancellationToken);
 
-            var getMeetupsResponse = new GetMeetupsResponse
-            {
-                Meetups = meetups.Select(meetup => new MeetupDto(
+            var getMeetupsResponse = meetups.Select(meetup => new MeetupDto(
                 meetup.MeetupId,
                 meetup.Title,
                 meetup.Description,
@@ -40,7 +50,7 @@ internal class GetMeetupsHandler(MeetupPlannerContext dbContext) : IRequestHandl
                     meetup.Location.Country,
                     meetup.Location.Description
                     ),
-                []))
+                []));
 
                 //[.. presentations.Select(p => new PresentationDto(
                 //    p.PresentationId,
@@ -60,18 +70,13 @@ internal class GetMeetupsHandler(MeetupPlannerContext dbContext) : IRequestHandl
                 //            ))
                 //        ]))
                 //]);
-            };
+            //};
 
-            return Result.Success<IReadOnlyCollection<MeetupDto>>([.. getMeetupsResponse.Meetups]);
+            return Result.Success<GetMeetupsResponse>(new GetMeetupsResponse([.. getMeetupsResponse]));
         }
         catch (Exception ex)
         {
-            return Result.Failure<IReadOnlyCollection<MeetupDto>>(ex.Message);
+            return Result.Failure<GetMeetupsResponse>(ex.Message);
         }
-    }
-}
-
-internal class GetMeetupsResponse
-{
-    public IEnumerable<MeetupDto> Meetups { get; set; }
+    }    
 }
