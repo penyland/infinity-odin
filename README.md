@@ -14,6 +14,13 @@ dotnet publish -t:PublishContainer -p:ContainerImageTags=latest --no-restore -p:
 ### Build image and push to Azure Container Registry
 To build and publish the application to Azure Container Registry and then update the container app, run the following commands:
 
+First login to the container registry:
+```
+docker login mycontainerregistry.azurecr.io
+```
+
+Enter username and password when prompted.
+
 Build the container image by running the following command:
 ```
 dotnet publish .\src\Odin.Api\Odin.Api.csproj  -t:PublishContainer -p:ContainerImageTags='"latest"' -p:VersionSuffix=test1 -p:ContainerRegistry=mycontainerregistry.azurecr.io
@@ -23,6 +30,9 @@ This will create a docker image `odin/api` with the tag `latest` and push it to 
 Replace `mycontainerregistry.azurecr.io` with your Azure Container Registry name.
 
 # Running the application
+
+## Running the application in Azure
+To run the application in Azure, you need to create a Container App in Azure. You can do this using the Azure Portal or using the Azure CLI.
 
 ## Running the application locally
 
@@ -44,15 +54,24 @@ This will run the application on port 5000.
 
 ### Run the application in a container using https and a self-signed certificate
 
+Generate a certificate and configure the local machine:
+
+```bash
+dotnet dev-certs https -ep $env:USERPROFILE\.aspnet\https\aspnetapp.pfx -p <CREDENTIAL_PLACEHOLDER>
+dotnet dev-certs https --trust
+```
+
+In the preceding commands, replace <CREDENTIAL_PLACEHOLDER> with a password.
+
 To run the application in a container using https and a self-signed certificate, run the following command:
 ```
-docker run --rm -it -p 5001:8080 -e ASPNETCORE_URLS="https://+:8080;" -e ASPNETCORE_ENVIRONMENT=Development -e ASPNETCORE_HTTPS_PORT=5001 -e ASPNETCORE_Kestrel__Certificates__Default__Password="docker" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx -v $env:USERPROFILE\.aspnet\https:/https/ -v $env:APPDATA\microsoft\UserSecrets\:/root/.microsoft/usersecrets:ro odin/api:latest
+docker run --rm -it -p 7119:8080 -e ASPNETCORE_URLS="https://+:8080;" -e ASPNETCORE_ENVIRONMENT=Development -e ASPNETCORE_HTTPS_PORT=7119 -e ASPNETCORE_Kestrel__Certificates__Default__Password="docker" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx -v $env:USERPROFILE\.aspnet\https:/https/ -v $env:APPDATA\microsoft\UserSecrets\:/root/.microsoft/usersecrets:ro odin/api:latest
 ```
 
 Running locally with user-secrets requires mounting the user-secrets directory to the container. This is done by mounting the user-secrets directory to the container using the `-v` flag.
 It's also required to run as root to access the user-secrets directory. This is done by running the container with the `--user` flag.
 ```
-docker run --rm -it -p 5001:8080 -e ASPNETCORE_URLS="https://+:8080;" -e ASPNETCORE_ENVIRONMENT=Development -e ASPNETCORE_HTTPS_PORT=5001 -e ASPNETCORE_Kestrel__Certificates__Default__Password="docker" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx -v $env:USERPROFILE\.aspnet\https:/https/ -v $env:APPDATA\microsoft\UserSecrets\:/root/.microsoft/usersecrets --user root odin/api:latest
+docker run --rm -it -p 7119:8080 -e ASPNETCORE_URLS="https://+:8080;" -e ASPNETCORE_ENVIRONMENT=Development -e ASPNETCORE_HTTPS_PORT=7119 -e ASPNETCORE_Kestrel__Certificates__Default__Password="docker" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx -v $env:USERPROFILE\.aspnet\https:/https/ -v $env:APPDATA\microsoft\UserSecrets\:/root/.microsoft/usersecrets --user root odin/api:latest
 ```
 
 ## Dependencies
