@@ -4,12 +4,12 @@ using Infinity.Toolkit.FeatureModules;
 using Infinity.Toolkit.Handlers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Odin.Modules.MeetupPlanner.Extensions;
 using Odin.Modules.MeetupPlanner.Features.Common;
 using Odin.Modules.MeetupPlanner.Features.Locations;
 using Odin.Modules.MeetupPlanner.Features.Meetups;
+using Odin.Modules.MeetupPlanner.Features.Speakers;
 using Odin.Modules.MeetupPlanner.Infrastructure;
 
 namespace Odin.Modules.MeetupPlanner;
@@ -28,6 +28,13 @@ public class MeetupPlannerModule : WebFeatureModule
         builder.Services.AddRequestHandler<GetMeetupLocation.Query, GetMeetupLocation.Response, GetMeetupLocation.Handler>();
         builder.Services.AddRequestHandler<GetMeetupPresentations.Query, GetMeetupPresentations.Response, GetMeetupPresentations.Handler>();
         builder.Services.AddRequestHandler<GetMeetupRsvps.Query, GetMeetupRsvps.Response, GetMeetupRsvps.Handler>();
+
+        builder.Services.AddRequestHandler<GetPresentations.Response, GetPresentations.Handler>();
+
+        builder.Services.AddRequestHandler<GetSpeakers.Response, GetSpeakers.Handler>();
+        builder.Services.AddRequestHandler<GetSpeaker.Query, GetSpeaker.Response, GetSpeaker.Handler>();
+        builder.Services.AddRequestHandler<GetSpeakerBios.Query, GetSpeakerBios.Response, GetSpeakerBios.Handler>();
+        builder.Services.AddRequestHandler<GetSpeakerPresentations.Query, GetSpeakerPresentations.Response, GetSpeakerPresentations.Handler>();
     }
 
     public override void MapEndpoints(WebApplication app)
@@ -35,185 +42,80 @@ public class MeetupPlannerModule : WebFeatureModule
         var group = app.MapGroup("/meetupplanner")
             .WithTags("Meetup Planner");
 
-        group.MapGet("/locations", async(IRequestHandler<GetLocations.Response > handler) =>
+        group.MapGet("/locations", async (IRequestHandler<GetLocations.Response> handler) =>
         {
             var response = await handler.HandleAsync();
             return response is Failure ?
                 Results.Problem(response.ToProblemDetails()) :
                 Results.Json(response.Value.Locations);
         })
-        .Produces<IReadOnlyCollection<LocationDto>>(200);
+        .Produces<IReadOnlyList<LocationDto>>(200);
 
-        group.MapGetQuery<GetLocation.Query, GetLocation.Response>("/locations/{locationId}");
+        group.MapGetQuery<GetLocation.Query, GetLocation.Response>("/locations/{locationId}")
+            .Produces<LocationDto>()
+            .Produces(400);
 
-        group.MapGet("/meetups", async (IRequestHandler<GetMeetups.Query, GetMeetups.Response> handler, [FromQuery] string? status) =>
+        group.MapGet("/meetups", async (IRequestHandler<GetMeetups.Query, GetMeetups.Response> handler, [AsParameters] MeetupQueryParameters queryParams) =>
         {
-            if (status is not null)
+            var meetupStatus = MeetupStatus.All;
+            if (queryParams.Status is not null && !queryParams.TryParseStatus(out meetupStatus))
             {
-                // Validate status
-                var valid = status.ToLowerInvariant() switch
-                {
-                    "proposed" or
-                    "scheduled" or
-                    "completed" or
-                    "cancelled" => true,
-                    _ => false
-                };
-
-                if (!valid)
-                {
-                    return Results.BadRequest();
-                }
+                return Results.BadRequest($"Invalid status '{queryParams.Status}'");
             }
 
-            var response = await handler.HandleAsync(new HandlerContext<GetMeetups.Query> { Request = new GetMeetups.Query(status) });
+            var response = await handler.HandleAsync(new HandlerContext<GetMeetups.Query> { Request = new GetMeetups.Query(meetupStatus.ToString()) });
 
             return response is Failure ?
                 Results.Problem(response.ToProblemDetails()) :
                 Results.Json(response.Value.Meetups);
         })
-        .Produces<IReadOnlyCollection<MeetupDto>>(200);
+        .Produces<IReadOnlyList<MeetupDto>>(200)
+        .Produces(400);
 
         group.MapGetQuery<GetMeetup.Query, GetMeetup.Response>("/meetups/{meetupId}")
-            .Produces<MeetupDto>();
+            .Produces<MeetupDto>()
+            .Produces(400);
 
         group.MapGetQuery<GetMeetupLocation.Query, GetMeetupLocation.Response>("/meetups/{meetupId}/location")
-            .Produces<LocationDto>();
+            .Produces<LocationDto>()
+            .Produces(400);
 
         group.MapGetQuery<GetMeetupPresentations.Query, GetMeetupPresentations.Response>("/meetups/{meetupId}/presentations")
-            .Produces<GetMeetupPresentations.Response>();
+            .Produces<PresentationDto>()
+            .Produces(400);
 
         group.MapGetQuery<GetMeetupRsvps.Query, GetMeetupRsvps.Response>("/meetups/{meetupId}/rsvps")
-            .Produces<GetMeetupRsvps.Response>();
+            .Produces<RsvpDto>()
+            .Produces(400);
 
-        group.MapGet("/presentations", async (MeetupPlannerContext dbContext) =>
-        {
-            var presentations = await dbContext.Presentations
-                .Include(p => p.PresentationSpeakers)
-                .ThenInclude(ps => ps.Speaker)
-                .AsNoTracking()
-                .ToListAsync();
-            var response = presentations.Select(p => new
-            {
-                p.PresentationId,
-                p.Title,
-                p.Abstract,
-                Speakers = p.PresentationSpeakers
-                    .Where(ps => ps.Speaker != null)
-                    .Select(ps => new
-                    {
-                        ps.Speaker.SpeakerId,
-                        ps.Speaker.FullName,
-                        ps.Speaker.Company,
-                        ps.Speaker.TwitterUrl,
-                        ps.Speaker.GitHubUrl,
-                        ps.Speaker.LinkedInUrl
-                    })
-            });
-            return Results.Ok(response);
-        });
+        group.MapGetQuery<GetPresentations.Response>("/presentations")
+            .Produces<IReadOnlyList<PresentationDto>>(200)
+            .Produces(400);
 
-        group.MapGet("/speakers", async (MeetupPlannerContext dbContext) =>
-        {
-            var speakers = await dbContext.Speakers
-                .Include(s => s.Bios)
-                .AsNoTracking()
-                .ToListAsync();
-            var response = speakers.Select(s => new
-            {
-                s.SpeakerId,
-                s.FullName,
-                s.Company,
-                s.TwitterUrl,
-                s.GitHubUrl,
-                s.LinkedInUrl,
-                s.Bios.FirstOrDefault(b => b.IsPrimary)?.Bio
-            });
-            return Results.Ok(response);
-        });
+        group.MapGetQuery<GetSpeakers.Response>("/speakers")
+            .Produces<IReadOnlyList<SpeakerDto>>(200)
+            .Produces(400);
 
-        group.MapGet("/speakers/{speakerId}", async (MeetupPlannerContext dbContext, Guid speakerId) =>
-        {
-            var speaker = await dbContext.Speakers
-                .Include(s => s.Bios)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.SpeakerId == speakerId);
-            if (speaker == null)
-            {
-                return Results.NotFound();
-            }
-            var response = new
-            {
-                speaker.SpeakerId,
-                speaker.FullName,
-                speaker.Company,
-                speaker.TwitterUrl,
-                speaker.GitHubUrl,
-                speaker.LinkedInUrl,
-                speaker.Bios.FirstOrDefault(b => b.IsPrimary)?.Bio
-            };
-            return Results.Ok(response);
-        });
+        group.MapGetQuery<GetSpeaker.Query, GetSpeaker.Response>("/speakers/{speakerId}")
+            .Produces<SpeakerDto>()
+            .Produces(StatusCodes.Status400BadRequest);
 
-        group.MapGet("/speakers/{speakerId}/bios", async (MeetupPlannerContext dbContext, Guid speakerId) =>
-        {
-            var bios = await dbContext.SpeakerBios
-                .Where(b => b.SpeakerId == speakerId)
-                .AsNoTracking()
-                .ToListAsync();
-            if (bios == null || bios.Count == 0)
-            {
-                return Results.NotFound();
-            }
-            var response = bios.Select(b => new
-            {
-                b.SpeakerBioId,
-                b.Bio,
-                b.IsPrimary
-            });
-            return Results.Ok(response);
-        });
+        group.MapGetQuery<GetSpeakerBios.Query, GetSpeakerBios.Response>("/speakers/{speakerId}/bios")
+            .Produces<IReadOnlyList<SpeakerBioDto>>(200)
+            .Produces(StatusCodes.Status400BadRequest);
 
-        group.MapGet("/speakers/{speakerId}/presentations", async (MeetupPlannerContext dbContext, Guid speakerId) =>
-        {
-            var presentations = await dbContext.PresentationSpeakers
-                .Where(ps => ps.SpeakerId == speakerId)
-                .Include(ps => ps.Presentation)
-                .AsNoTracking()
-                .Select(ps => ps.Presentation)
-                .ToListAsync();
-
-            if (presentations == null || presentations.Count == 0)
-            {
-                return Results.NotFound();
-            }
-            var response = presentations.Select(p => new PresentationDto(
-                p.PresentationId,
-                p.Title,
-                p.Abstract,
-                null));
-            return Results.Ok(response);
-        });
+        group.MapGetQuery<GetSpeakerPresentations.Query, GetSpeakerPresentations.Response>("/speakers/{speakerId}/presentations")
+            .Produces<IReadOnlyList<PresentationDto>>(200)
+            .Produces(StatusCodes.Status400BadRequest);
     }
 }
 
-
-
-
-public enum EventStatus
-{
-    Proposed,
-    Scheduled,
-    Completed,
-    Cancelled
-}
-
 // Model for query parameters
-public class EventQueryParameters
+public class MeetupQueryParameters
 {
     public string? Status { get; set; }
 
-    public bool TryParseStatus(out EventStatus statusEnum)
+    public bool TryParseStatus(out MeetupStatus statusEnum)
     {
         return Enum.TryParse(Status, true, out statusEnum);
     }

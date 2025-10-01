@@ -8,9 +8,9 @@ namespace Odin.Modules.MeetupPlanner.Features.Meetups;
 
 public static class GetMeetups
 {
-    public sealed record Query(string? Status);
+    public sealed record Query(string Status);
 
-    public record Response(IReadOnlyCollection<MeetupDto> Meetups);
+    public record Response(IReadOnlyList<MeetupDto> Meetups);
 
     internal class Handler(MeetupPlannerContext dbContext) : IRequestHandler<Query, Response>
     {
@@ -19,22 +19,22 @@ public static class GetMeetups
             try
             {
                 var query = dbContext.Meetups
-                .Include(m => m.Location)
-                .Include(m => m.ScheduleSlots)
-                .ThenInclude(s => s.Presentation)
-                .ThenInclude(p => p.PresentationSpeakers)
-                .ThenInclude(ps => ps.Speaker)
-                .OrderBy(m => m.StartUtc)
-                .AsQueryable();
+                    .Include(m => m.Location)
+                    .Include(m => m.ScheduleSlots)
+                    .ThenInclude(s => s.Presentation)
+                    .ThenInclude(p => p.PresentationSpeakers)
+                    .ThenInclude(ps => ps.Speaker)
+                    .OrderBy(m => m.StartUtc)
+                    .AsQueryable();
 
-                if (!string.IsNullOrEmpty(context.Request.Status))
+                if (context.Request.Status != "All")
                 {
                     query = query.Where(e => e.Status == context.Request.Status);
                 }
 
                 var meetups = await query
-                .AsNoTracking()
-                .ToListAsync(cancellationToken: cancellationToken);
+                    .AsNoTracking()
+                    .ToListAsync(cancellationToken: cancellationToken);
 
                 var getMeetupsResponse = meetups.Select(m => new MeetupDto(
                 m.MeetupId,
@@ -53,16 +53,18 @@ public static class GetMeetups
                     LocationId = m.Location.LocationId,
                     Name = m.Location.Name
                 },
-                [.. m.ScheduleSlots.Select(s => new PresentationDto(
-                    s.Presentation.PresentationId,
-                    s.Presentation.Title,
-                    Speakers: [.. s.Presentation.PresentationSpeakers
+                [.. m.ScheduleSlots.Select(s => new PresentationDto
+                {
+                    PresentationId = s.Presentation.PresentationId,
+                    Title = s.Presentation.Title,
+                    Speakers = [.. s.Presentation.PresentationSpeakers
                         .Select(ps => ps.Speaker)
-                        .Select(s => new SpeakerDto(
-                            s.SpeakerId,
-                            s.FullName
-                            ))]
-                    )).ToList()]));
+                        .Select(s => new SpeakerDto
+                        {
+                            SpeakerId = s.SpeakerId,
+                            FullName = s.FullName
+                        })]
+                })]));
 
                 return Result.Success<Response>(new Response([.. getMeetupsResponse]));
             }

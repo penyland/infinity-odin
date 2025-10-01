@@ -10,24 +10,7 @@ public record MeetupDto(
     DateTimeOffset EndUtc,
     RsvpDto Rsvp,
     LocationDto Location,
-    List<PresentationDto>? Presentations = null
-);
-
-public record PresentationDto(
-    Guid PresentationId,
-    string Title,
-    string? Abstract = null,
-    List<SpeakerDto>? Speakers = null
-);
-
-public record SpeakerDto(
-    Guid SpeakerId,
-    string FullName,
-    string? Company = null,
-    string? TwitterUrl = null,
-    string? GitHubUrl = null,
-    string? LinkedInUrl = null,
-    string? Bio = null
+    IReadOnlyList<PresentationDto>? Presentations = null
 );
 
 public record RsvpDto(

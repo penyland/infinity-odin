@@ -1,6 +1,7 @@
 ﻿using Infinity.Toolkit;
 using Infinity.Toolkit.Handlers;
 using Microsoft.EntityFrameworkCore;
+using Odin.Modules.MeetupPlanner.Features.Common;
 using Odin.Modules.MeetupPlanner.Infrastructure;
 
 namespace Odin.Modules.MeetupPlanner.Features.Meetups;
@@ -9,7 +10,7 @@ public static class GetMeetupPresentations
 {
     public sealed record Query(Guid MeetupId);
 
-    public sealed record Response(IReadOnlyCollection<PresentationDto> Presentations);
+    public sealed record Response(IReadOnlyList<PresentationDto> Presentations);
 
     internal class Handler(MeetupPlannerContext dbContext) : IRequestHandler<Query, Response>
     {
@@ -33,21 +34,19 @@ public static class GetMeetupPresentations
                         new Error("400", "No presentations found for the specified meetup."));
                 }
 
-                var response = presentations.Select(p => new PresentationDto(
-                p.PresentationId,
-                p.Title,
-                p.Abstract,
-                [.. p.PresentationSpeakers
-                    .Where(ps => ps.Speaker != null)
-                    .Select(ps => ps.Speaker)
-                    .Select(s => new SpeakerDto(
-                        s.SpeakerId,
-                        s.FullName,
-                        s.Company,
-                        s.TwitterUrl,
-                        s.GitHubUrl,
-                        s.LinkedInUrl,
-                        s.Bios.FirstOrDefault(b => b.IsPrimary)?.Bio))]));
+                var response = presentations.Select(p => new PresentationDto
+                {
+                    PresentationId = p.PresentationId,
+                    Title = p.Title,
+                    Abstract = p.Abstract,
+                    Speakers = [.. p.PresentationSpeakers
+                        .Select(ps => ps.Speaker)
+                        .Select(s => new SpeakerDto
+                        {
+                            SpeakerId = s.SpeakerId,
+                            FullName = s.FullName,
+                        })]
+                });
 
                 return Result.Success(new Response([.. response]));
             }
