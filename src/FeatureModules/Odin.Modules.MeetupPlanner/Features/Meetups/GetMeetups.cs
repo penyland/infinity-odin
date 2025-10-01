@@ -6,17 +6,19 @@ using Odin.Modules.MeetupPlanner.Infrastructure;
 
 namespace Odin.Modules.MeetupPlanner.Features.Meetups;
 
-public record GetMeetupsRequest(string? Status);
-
-public record GetMeetupsResponse(IReadOnlyCollection<MeetupDto> Meetups);
-
-internal class GetMeetups(MeetupPlannerContext dbContext) : IRequestHandler<GetMeetupsRequest, GetMeetupsResponse>
+public static class GetMeetups
 {
-    public async Task<Result<GetMeetupsResponse>> HandleAsync(IHandlerContext<GetMeetupsRequest> context, CancellationToken cancellationToken = default)
+    public sealed record Query(string? Status);
+
+    public record Response(IReadOnlyCollection<MeetupDto> Meetups);
+
+    internal class Handler(MeetupPlannerContext dbContext) : IRequestHandler<Query, Response>
     {
-        try
+        public async Task<Result<Response>> HandleAsync(IHandlerContext<Query> context, CancellationToken cancellationToken = default)
         {
-            var query = dbContext.Meetups
+            try
+            {
+                var query = dbContext.Meetups
                 .Include(m => m.Location)
                 .Include(m => m.ScheduleSlots)
                 .ThenInclude(s => s.Presentation)
@@ -25,16 +27,16 @@ internal class GetMeetups(MeetupPlannerContext dbContext) : IRequestHandler<GetM
                 .OrderBy(m => m.StartUtc)
                 .AsQueryable();
 
-            if (!string.IsNullOrEmpty(context.Request.Status))
-            {
-                query = query.Where(e => e.Status == context.Request.Status);
-            }
+                if (!string.IsNullOrEmpty(context.Request.Status))
+                {
+                    query = query.Where(e => e.Status == context.Request.Status);
+                }
 
-            var meetups = await query
+                var meetups = await query
                 .AsNoTracking()
                 .ToListAsync(cancellationToken: cancellationToken);
 
-            var getMeetupsResponse = meetups.Select(m => new MeetupDto(
+                var getMeetupsResponse = meetups.Select(m => new MeetupDto(
                 m.MeetupId,
                 m.Title,
                 m.Description,
@@ -62,12 +64,12 @@ internal class GetMeetups(MeetupPlannerContext dbContext) : IRequestHandler<GetM
                             ))]
                     )).ToList()]));
 
-            return Result.Success<GetMeetupsResponse>(new GetMeetupsResponse([.. getMeetupsResponse]));
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<GetMeetupsResponse>(ex.Message);
+                return Result.Success<Response>(new Response([.. getMeetupsResponse]));
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<Response>(ex.Message);
+            }
         }
     }
-
 }

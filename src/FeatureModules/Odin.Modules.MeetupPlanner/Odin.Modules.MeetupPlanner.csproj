@@ -20,7 +20,6 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Folder Include="Features\Locations\" />
     <Folder Include="Features\Presentations\" />
     <Folder Include="Features\Speakers\" />
     <Folder Include="MCP\" />
