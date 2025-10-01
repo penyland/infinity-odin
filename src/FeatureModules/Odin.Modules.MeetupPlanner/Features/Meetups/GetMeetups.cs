@@ -1,15 +1,16 @@
 ﻿using Infinity.Toolkit;
 using Infinity.Toolkit.Handlers;
 using Microsoft.EntityFrameworkCore;
-using Odin.Features.MeetupPlanner.Models;
+using Odin.Modules.MeetupPlanner.Features.Common;
+using Odin.Modules.MeetupPlanner.Infrastructure;
 
-namespace Odin.Features.MeetupPlanner.Handlers.GetMeetups;
+namespace Odin.Modules.MeetupPlanner.Features.Meetups;
 
 public record GetMeetupsRequest(string? Status);
 
-public record GetMeetupsResponse(IReadOnlyCollection<MeetupDto2> Meetups);
+public record GetMeetupsResponse(IReadOnlyCollection<MeetupDto> Meetups);
 
-internal class GetMeetupsHandler(MeetupPlannerContext dbContext) : IRequestHandler<GetMeetupsRequest, GetMeetupsResponse>
+internal class GetMeetups(MeetupPlannerContext dbContext) : IRequestHandler<GetMeetupsRequest, GetMeetupsResponse>
 {
     public async Task<Result<GetMeetupsResponse>> HandleAsync(IHandlerContext<GetMeetupsRequest> context, CancellationToken cancellationToken = default)
     {
@@ -33,7 +34,7 @@ internal class GetMeetupsHandler(MeetupPlannerContext dbContext) : IRequestHandl
                 .AsNoTracking()
                 .ToListAsync(cancellationToken: cancellationToken);
 
-            var getMeetupsResponse = meetups.Select(m => new MeetupDto2(
+            var getMeetupsResponse = meetups.Select(m => new MeetupDto(
                 m.MeetupId,
                 m.Title,
                 m.Description,
@@ -45,10 +46,12 @@ internal class GetMeetupsHandler(MeetupPlannerContext dbContext) : IRequestHandl
                     m.RsvpNoCount ?? 0,
                     m.RsvpWaitlistCount ?? 0,
                     m.AttendanceCount ?? 0),
-                new LocationDto(
-                    m.Location.LocationId,
-                    m.Location.Name),
-                [.. m.ScheduleSlots.Select(s => new PresentationDto2(
+                new LocationDto
+                {
+                    LocationId = m.Location.LocationId,
+                    Name = m.Location.Name
+                },
+                [.. m.ScheduleSlots.Select(s => new PresentationDto(
                     s.Presentation.PresentationId,
                     s.Presentation.Title,
                     Speakers: [.. s.Presentation.PresentationSpeakers
@@ -68,21 +71,3 @@ internal class GetMeetupsHandler(MeetupPlannerContext dbContext) : IRequestHandl
     }
 
 }
-
-public record MeetupDto2(
-        Guid MeetupId,
-        string Title,
-        string Description,
-        DateTimeOffset StartUtc,
-        DateTimeOffset EndUtc,
-        RsvpDto Rsvp,
-        LocationDto Location,
-        List<PresentationDto2>? Presentations = null
-    );
-
-public record PresentationDto2(
-    Guid PresentationId,
-    string Title,
-    string? Abstract = null,
-    SpeakerDto[]? Speakers = null
-);

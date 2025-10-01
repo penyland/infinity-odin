@@ -1,11 +1,11 @@
 ﻿using ModelContextProtocol.Server;
 using Odin.Features.MeetupPlanner.Infrastructure;
 using Odin.Features.MeetupPlanner.Infrastructure.Dapper;
-using Odin.Features.MeetupPlanner.Models;
+using Odin.Modules.MeetupPlanner.Infrastructure.Models;
 using System.ComponentModel;
 using System.Text.Json;
 
-namespace Odin.Features.MeetupPlanner.MCP;
+namespace Odin.Modules.MeetupPlanner.MCP;
 
 [McpServerToolType]
 public class MeetupPlannerMcpTools(IMeetupPlannerDb meetupPlannerDb)

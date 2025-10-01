@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\FeatureModules\Odin.Features.MeetupPlanner\Odin.Features.MeetupPlanner.csproj" />
+    <ProjectReference Include="..\..\FeatureModules\Odin.Features.MeetupPlanner\Odin.Modules.MeetupPlanner.csproj" />
     <ProjectReference Include="..\..\Shared\Odin.ServiceDefaults\Odin.ServiceDefaults.csproj" />
   </ItemGroup>
 

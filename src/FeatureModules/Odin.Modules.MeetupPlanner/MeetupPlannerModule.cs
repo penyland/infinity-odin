@@ -8,12 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
-using Odin.Features.MeetupPlanner.Handlers.GetMeetups;
 using Odin.Features.MeetupPlanner.Infrastructure.Dapper;
-using Odin.Features.MeetupPlanner.Models;
+using Odin.Modules.MeetupPlanner.Features.Common;
+using Odin.Modules.MeetupPlanner.Features.Meetups;
+using Odin.Modules.MeetupPlanner.Infrastructure;
 
-namespace Odin.Features.MeetupPlanner;
+namespace Odin.Modules.MeetupPlanner;
 
 public class MeetupPlannerModule : WebFeatureModule
 {
@@ -24,8 +24,8 @@ public class MeetupPlannerModule : WebFeatureModule
 
         builder.AddSqlServerDbContext<MeetupPlannerContext>("MeetupPlanner");
 
-        builder.Services.AddRequestHandler<GetMeetupsRequest, GetMeetupsResponse, GetMeetupsHandler>();
-        builder.Services.AddRequestHandler<GetMeetupFromIdRequest, GetMeetupFromIdResponse, GetMeetupHandler>();
+        builder.Services.AddRequestHandler<GetMeetupsRequest, GetMeetupsResponse, GetMeetups>();
+        builder.Services.AddRequestHandler<GetMeetup.Query, GetMeetup.Response, GetMeetup.Handler>();
     }
 
     public override void MapEndpoints(WebApplication app)
@@ -62,14 +62,18 @@ public class MeetupPlannerModule : WebFeatureModule
             var locations = await dbContext.Locations.AsNoTracking().ToListAsync();
 
             // Map to LocationDTO
-            var response = locations.Select(l => new LocationDto(
-                l.LocationId,
-                l.Name,
-                l.Street,
-                l.City,
-                l.PostalCode,
-                l.Country,
-                l.Description));
+            var response = locations.Select(l => new LocationDto
+            {
+                LocationId = l.LocationId,
+                Name = l.Name,
+                Street = l.Street,
+                City = l.City,
+                PostalCode = l.PostalCode,
+                Country = l.Country,
+                Description = l.Description,
+                MaxCapacity = l.MaxCapacity,
+                IsActive = l.IsActive,
+            });
 
             return Results.Json(response);
         });
@@ -80,14 +84,18 @@ public class MeetupPlannerModule : WebFeatureModule
                 .AsNoTracking()
                 .FirstOrDefaultAsync(l => l.LocationId == locationId);
 
-            var response = location != null ? new LocationDto(
-                location.LocationId,
-                location.Name,
-                location.Street,
-                location.City,
-                location.PostalCode,
-                location.Country,
-                location.Description) : null;
+            var response = location != null ? new LocationDto
+            {
+                LocationId = location.LocationId,
+                Name = location.Name,
+                Street = location.Street,
+                City = location.City,
+                PostalCode = location.PostalCode,
+                Country = location.Country,
+                Description = location.Description,
+                MaxCapacity = location.MaxCapacity,
+                IsActive = location.IsActive
+            } : null;
 
             return response != null ? Results.Json(response) : Results.NotFound(locationId);
         });
@@ -120,7 +128,7 @@ public class MeetupPlannerModule : WebFeatureModule
         })
         .Produces<IReadOnlyCollection<MeetupDto>>(200);
 
-        group.MapGetQuery<GetMeetupFromIdRequest, GetMeetupFromIdResponse>("/meetups/{meetupId}")
+        group.MapGetQuery<GetMeetup.Query, GetMeetup.Response>("/meetups/{meetupId}")
             .Produces<MeetupDto>()
             .Produces(400);
 
@@ -134,15 +142,21 @@ public class MeetupPlannerModule : WebFeatureModule
             {
                 return Results.NotFound();
             }
+
             var location = meetup.Location;
-            var response = new LocationDto(
-                location.LocationId,
-                location.Name,
-                location.Street,
-                location.City,
-                location.PostalCode,
-                location.Country,
-                location.Description);
+            var response = new LocationDto
+            {
+                LocationId = location.LocationId,
+                Name = location.Name,
+                Street = location.Street,
+                City = location.City,
+                PostalCode = location.PostalCode,
+                Country = location.Country,
+                Description = location.Description,
+                MaxCapacity = location.MaxCapacity,
+                IsActive = location.IsActive
+            };
+
             return Results.Ok(response);
         });
 
@@ -311,49 +325,3 @@ public class MeetupPlannerModule : WebFeatureModule
         });
     }
 }
-
-public record MeetupDto(
-    Guid MeetupId,
-    string Title,
-    string Description,
-    DateTimeOffset StartUtc,
-    DateTimeOffset EndUtc,
-    RsvpDto Rsvp,
-    LocationDto Location,
-    List<PresentationDto>? Presentations = null
-);
-
-public record PresentationDto(
-    Guid PresentationId,
-    string Title,
-    string? Abstract = null,
-    List<SpeakerDto>? Speakers = null
-);
-
-public record SpeakerDto(
-    Guid SpeakerId,
-    string FullName,
-    string? Company = null,
-    string? TwitterUrl = null,
-    string? GitHubUrl = null,
-    string? LinkedInUrl = null,
-    string? Bio = null
-);
-
-public record LocationDto(
-    Guid LocationId,
-    string Name,
-    string? Street = null,
-    string? City = null,
-    string? PostalCode = null,
-    string? Country = null,
-    string? Description = null
-);
-
-public record RsvpDto(
-    int TotalSpots,
-    int RsvpYesCount,
-    int RsvpNoCount,
-    int RsvpWaitlistCount,
-    int AttendanceCount
-    );

@@ -1,7 +1,7 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
-using Odin.Features.MeetupPlanner.Models;
+using Odin.Modules.MeetupPlanner.Infrastructure.Models;
 using System.Data;
 using System.Text.Json.Serialization;
 

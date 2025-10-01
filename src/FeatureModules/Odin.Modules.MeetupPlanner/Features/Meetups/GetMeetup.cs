@@ -1,21 +1,24 @@
 ﻿using Infinity.Toolkit;
 using Infinity.Toolkit.Handlers;
 using Microsoft.EntityFrameworkCore;
-using Odin.Features.MeetupPlanner.Models;
+using Odin.Modules.MeetupPlanner.Features.Common;
+using Odin.Modules.MeetupPlanner.Infrastructure;
 
-namespace Odin.Features.MeetupPlanner.Handlers.GetMeetups;
+namespace Odin.Modules.MeetupPlanner.Features.Meetups;
 
-public record GetMeetupFromIdRequest(Guid MeetupId);
-
-public record GetMeetupFromIdResponse(MeetupDto Meetup);
-
-internal class GetMeetupHandler(MeetupPlannerContext dbContext) : IRequestHandler<GetMeetupFromIdRequest, GetMeetupFromIdResponse>
+public static class GetMeetup
 {
-    public async Task<Result<GetMeetupFromIdResponse>> HandleAsync(IHandlerContext<GetMeetupFromIdRequest> context, CancellationToken cancellationToken)
+    public sealed record Query(Guid MeetupId);
+
+    public sealed record Response(MeetupDto Meetup);
+
+    internal class Handler(MeetupPlannerContext dbContext) : IRequestHandler<Query, Response>
     {
-        try
+        public async Task<Result<Response>> HandleAsync(IHandlerContext<Query> context, CancellationToken cancellationToken)
         {
-            var meetup = await dbContext.Meetups
+            try
+            {
+                var meetup = await dbContext.Meetups
                 .Include(m => m.Location)
                 .Include(m => m.ScheduleSlots)
                 .ThenInclude(s => s.Presentation)
@@ -35,16 +38,18 @@ internal class GetMeetupHandler(MeetupPlannerContext dbContext) : IRequestHandle
                         m.RsvpNoCount ?? 0,
                         m.RsvpWaitlistCount ?? 0,
                         m.AttendanceCount ?? 0),
-                    new LocationDto(
-                        m.Location.LocationId,
-                        m.Location.Name,
-                        m.Location.Street,
-                        m.Location.City,
-                        m.Location.PostalCode,
-                        m.Location.Country,
-                        m.Location.Description
-                        ),
-                        m.ScheduleSlots
+                new LocationDto
+                {
+                    Name = m.Location.Name,
+                    Description = m.Location.Description,
+                    City = m.Location.City,
+                    Country = m.Location.Country,
+                    LocationId = m.Location.LocationId,
+                    PostalCode = m.Location.PostalCode,
+                    Street = m.Location.Street,
+                    IsActive = m.Location.IsActive
+                },
+                    m.ScheduleSlots
                             .Where(slot => slot.Presentation != null)
                             .Select(slot => slot.Presentation)
                             .Select(p => new PresentationDto(
@@ -65,11 +70,12 @@ internal class GetMeetupHandler(MeetupPlannerContext dbContext) : IRequestHandle
                             .ToList()))
                 .FirstOrDefaultAsync(cancellationToken);
 
-            return meetup == null ? Result.Failure<GetMeetupFromIdResponse>("No meetup found") : Result.Success(new GetMeetupFromIdResponse(meetup));
-        }
-        catch (Exception ex)
-        {
-            return Result.Failure<GetMeetupFromIdResponse>(ex);
+                return meetup == null ? Result.Failure<Response>("No meetup found") : Result.Success(new Response(meetup));
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<Response>(ex);
+            }
         }
     }
 }

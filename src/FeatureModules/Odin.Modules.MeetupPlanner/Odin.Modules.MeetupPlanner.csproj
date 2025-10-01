@@ -4,6 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>Odin.Modules.MeetupPlanner</RootNamespace>
   </PropertyGroup>
   
   <ItemGroup>
@@ -19,6 +20,9 @@
   </ItemGroup>
   
   <ItemGroup>
+    <Folder Include="Features\Locations\" />
+    <Folder Include="Features\Presentations\" />
+    <Folder Include="Features\Speakers\" />
     <Folder Include="MCP\" />
   </ItemGroup>
   
