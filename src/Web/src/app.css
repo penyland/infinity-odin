@@ -1,0 +1,7 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+/* Custom font family for handwritten style */
+.font-handwritten {
+	font-family: 'Caveat', cursive;
+}
