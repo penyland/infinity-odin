@@ -12,9 +12,6 @@
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/Odin.ServiceDefaults/Odin.ServiceDefaults.csproj" />
   </Folder>
-  <Folder Name="/src/Worker/" Id="d765d0ca-5395-400c-9310-4e38947ec309">
-    <Project Path="src/Worker/Odin.WorkerService/Odin.WorkerService.csproj" Id="711550b3-e371-4c75-8b3a-148809b915d4" />
-  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Odin.Api.IntegrationTests/Odin.Api.IntegrationTests.csproj" />
     <Project Path="tests/Odin.Api.Tests/Odin.Api.Tests.csproj" />
