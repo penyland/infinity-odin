@@ -1,5 +1,4 @@
 ﻿using ModelContextProtocol.Server;
-using Odin.Features.MeetupPlanner.Infrastructure;
 using Odin.Features.MeetupPlanner.Infrastructure.Dapper;
 using Odin.Modules.MeetupPlanner.Infrastructure.Models;
 using System.ComponentModel;

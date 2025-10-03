@@ -91,10 +91,16 @@ public class MeetupPlannerModule : WebFeatureModule
         group.MapGetQuery<GetPresentations.Response>("/presentations")
             .Produces<IReadOnlyList<PresentationDto>>(200)
             .Produces(400);
-
-        group.MapGetQuery<GetSpeakers.Response>("/speakers")
-            .Produces<IReadOnlyList<SpeakerDto>>(200)
-            .Produces(400);
+                
+        group.MapGet("/speakers", async (IRequestHandler<GetSpeakers.Response> handler) =>
+        {
+            var response = await handler.HandleAsync();
+            return response is Failure ?
+                Results.Problem(response.ToProblemDetails()) :
+                Results.Json(response.Value.Speakers);
+        })
+        .Produces<IReadOnlyList<SpeakerDto>>(200)
+        .Produces(StatusCodes.Status400BadRequest);
 
         group.MapGetQuery<GetSpeaker.Query, GetSpeaker.Response>("/speakers/{speakerId}")
             .Produces<SpeakerDto>()

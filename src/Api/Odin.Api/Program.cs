@@ -10,8 +10,7 @@ builder.AddServiceDefaults();
 // Add services to the container.
 builder.AddFeatureModules();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+builder.Services.AddMicrosoftIdentityWebApiAuthentication(builder.Configuration, "AzureAd");
 
 builder.Services.AddAuthorization();
 
