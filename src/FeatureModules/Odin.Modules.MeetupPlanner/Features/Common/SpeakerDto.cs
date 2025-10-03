@@ -8,5 +8,7 @@ public record SpeakerDto
     public string? TwitterUrl { get; init; }
     public string? GitHubUrl { get; init; }
     public string? LinkedInUrl { get; init; }
+    public string? BlogUrl { get; init; }
+    public string? ThumbnailUrl { get; init; }
     public string? Bio { get; init; }
 }

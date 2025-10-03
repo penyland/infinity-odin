@@ -51,6 +51,8 @@ export interface SpeakerDto {
 	twitterUrl?: string | null;
 	gitHubUrl?: string | null;
 	linkedInUrl?: string | null;
+	blogUrl?: string | null;
+	thumbnailUrl?: string | null;
 	bio?: string | null;
 }
 

@@ -44,22 +44,22 @@
       <h2 class="mb-6 text-3xl font-bold">Upcoming events</h2>
       <div class="grid grid-cols-2 gap-6 lg:grid-cols-1">
         {#each data.upcomingMeetups as meetup}
-          <div class="rounded-sm p-6 shadow-lg">
+          <div class="rounded-sm p-6 shadow-lg hover:shadow-xl transition">
             <div class="mb-2">
               <div class="mb-3">
                 <span class="mb-2 text-sm italic">
                   {meetup.startUtc
-                  ? `${new Date(meetup.startUtc).toLocaleDateString('en-US', { weekday: 'long', month: 'numeric', day: 'numeric', year: 'numeric' })}`
-                  : ''}
+                    ? `${new Date(meetup.startUtc).toLocaleDateString('en-US', { weekday: 'long', month: 'numeric', day: 'numeric', year: 'numeric' })}`
+                    : ''}
                 </span>
                 <span class="text-sm text-gray-600">@{meetup.location.name}</span>
               </div>
               <div class="text-lg font-bold">{meetup.title}</div>
-              <div class="mt-2 text-md text-gray-600">Agenda:</div>
+              <div class="text-md mt-2 text-gray-600">Agenda:</div>
               <ul>
                 {#each meetup.presentations ?? [] as presentation}
                   <li class="mt-2">
-                    <div class="mt-1 text-md">
+                    <div class="text-md mt-1">
                       {presentation.title} - {(presentation.speakers ?? [])
                         .map((s) => s.fullName)
                         .join(', ')}
@@ -77,9 +77,12 @@
 
     <!-- Past Events Section -->
     <section class="mb-12">
-      <div>
-        <span class="mb-4 text-2xl font-bold">Past Events</span>
-        <span class="ml-2 mb-2 text-md text-gray-600">{data.pastMeetups.length}</span>
+      <div class="mb-4 flex items-baseline justify-between gap-4">
+        <div>
+          <span class="text-2xl font-bold">Past Events</span>
+          <span class="text-md mb-2 ml-2 text-gray-600">{data.pastMeetups.length}</span>
+        </div>
+        <span class="text-sm text-gray-500">See all</span>
       </div>
       <div class="space-y-2 text-gray-700">
         {#each data.pastMeetups as meetup}
@@ -99,8 +102,19 @@
       <div class="grid grid-cols-2 gap-8 md:grid-cols-6">
         {#each data.speakers as speaker}
           <div class="flex flex-col items-center">
-            <div class="mb-2 flex h-16 w-16 items-center justify-center rounded-full border-2 border-black">
-              <span class="text-2xl">👤</span>
+            <div
+              class="mb-2 flex h-16 w-16 items-center justify-center rounded-full border-2 border-gray-200 shadow-lg hover:shadow-xl hover:border-gray-400 transition"
+            >
+              {#if speaker.thumbnailUrl}
+              {console.log(speaker.thumbnailUrl)}
+                <img
+                  src="{speaker.thumbnailUrl}"
+                  alt="{speaker.fullName}"
+                  class="h-16 w-16 rounded-full object-cover"
+                />
+              {:else}
+                <span class="text-2xl">👤</span>
+              {/if}
             </div>
             <div class="text-center text-sm">{speaker.fullName}</div>
           </div>
