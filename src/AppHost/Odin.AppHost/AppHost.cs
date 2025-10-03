@@ -2,6 +2,8 @@ using Odin.AppHost;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+var sqlDb = builder.AddConnectionString("MeetupPlanner");
+
 var rabbitmq = builder.AddRabbitMQ("RabbitMQ", port: 5672)
     .WithContainerName("odin-rabbitmq")
     .WithLifetime(ContainerLifetime.Persistent)
@@ -25,7 +27,7 @@ var storage = builder.AddAzureStorage("odin-storage")
 var api = builder.AddProject<Projects.Odin_Api>("odin-api")
     //.WithReference(rabbitmq, "Messaging").WaitFor(rabbitmq)
     .WithReference(storage).WaitFor(storage)
-    .WithReference(sqlDb, "AZURE_SQL_CONNECTIONSTRING")
+    .WithReference(sqlDb)
     .WithScalarCommand();
 
 var proxy = builder.AddProject<Projects.Odin_Proxy>("odin-proxy")
