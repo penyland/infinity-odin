@@ -33,7 +33,7 @@ public class MeetupPlannerModule : WebFeatureModule
 
         builder.Services.AddRequestHandler<GetSpeakers.Response, GetSpeakers.Handler>();
         builder.Services.AddRequestHandler<GetSpeaker.Query, GetSpeaker.Response, GetSpeaker.Handler>();
-        builder.Services.AddRequestHandler<GetSpeakerBios.Query, GetSpeakerBios.Response, GetSpeakerBios.Handler>();
+        builder.Services.AddRequestHandler<GetSpeakerBiographies.Query, GetSpeakerBiographies.Response, GetSpeakerBiographies.Handler>();
         builder.Services.AddRequestHandler<GetSpeakerPresentations.Query, GetSpeakerPresentations.Response, GetSpeakerPresentations.Handler>();
     }
 
@@ -42,18 +42,9 @@ public class MeetupPlannerModule : WebFeatureModule
         var group = app.MapGroup("/meetupplanner")
             .WithTags("Meetup Planner");
 
-        group.MapGet("/locations", async (IRequestHandler<GetLocations.Response> handler) =>
-        {
-            var response = await handler.HandleAsync();
-            return response is Failure ?
-                Results.Problem(response.ToProblemDetails()) :
-                Results.Json(response.Value.Locations);
-        })
-        .Produces<IReadOnlyList<LocationDto>>(200);
+        group.MapGetHandler<GetLocations.Response, IReadOnlyList<LocationDto>>("/locations", map => map.Locations);
 
-        group.MapGetQuery<GetLocation.Query, GetLocation.Response>("/locations/{locationId}")
-            .Produces<LocationDto>()
-            .Produces(400);
+        group.MapGetHandler<GetLocation.Query, GetLocation.Response, LocationDto>("/locations/{locationId}", map => map.Location);
 
         group.MapGet("/meetups", async (IRequestHandler<GetMeetups.Query, GetMeetups.Response> handler, [AsParameters] MeetupQueryParameters queryParams) =>
         {
@@ -66,53 +57,29 @@ public class MeetupPlannerModule : WebFeatureModule
             var response = await handler.HandleAsync(new HandlerContext<GetMeetups.Query> { Request = new GetMeetups.Query(meetupStatus.ToString()) });
 
             return response is Failure ?
-                Results.Problem(response.ToProblemDetails()) :
-                Results.Json(response.Value.Meetups);
+                TypedResults.Problem(response.ToProblemDetails()) :
+                TypedResults.Json(response.Value.Meetups);
         })
-        .Produces<IReadOnlyList<MeetupDto>>(200)
-        .Produces(400);
-
-        group.MapGetQuery<GetMeetup.Query, GetMeetup.Response>("/meetups/{meetupId}")
-            .Produces<MeetupDto>()
-            .Produces(400);
-
-        group.MapGetQuery<GetMeetupLocation.Query, GetMeetupLocation.Response>("/meetups/{meetupId}/location")
-            .Produces<LocationDto>()
-            .Produces(400);
-
-        group.MapGetQuery<GetMeetupPresentations.Query, GetMeetupPresentations.Response>("/meetups/{meetupId}/presentations")
-            .Produces<PresentationDto>()
-            .Produces(400);
-
-        group.MapGetQuery<GetMeetupRsvps.Query, GetMeetupRsvps.Response>("/meetups/{meetupId}/rsvps")
-            .Produces<RsvpDto>()
-            .Produces(400);
-
-        group.MapGetQuery<GetPresentations.Response>("/presentations")
-            .Produces<IReadOnlyList<PresentationDto>>(200)
-            .Produces(400);
-                
-        group.MapGet("/speakers", async (IRequestHandler<GetSpeakers.Response> handler) =>
-        {
-            var response = await handler.HandleAsync();
-            return response is Failure ?
-                Results.Problem(response.ToProblemDetails()) :
-                Results.Json(response.Value.Speakers);
-        })
-        .Produces<IReadOnlyList<SpeakerDto>>(200)
+        .Produces<IReadOnlyList<MeetupDto>>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest);
 
-        group.MapGetQuery<GetSpeaker.Query, GetSpeaker.Response>("/speakers/{speakerId}")
-            .Produces<SpeakerDto>()
-            .Produces(StatusCodes.Status400BadRequest);
+        group.MapGetHandler<GetMeetup.Query, GetMeetup.Response, MeetupDto>("/meetups/{meetupId}", map => map.Meetup);
 
-        group.MapGetQuery<GetSpeakerBios.Query, GetSpeakerBios.Response>("/speakers/{speakerId}/bios")
-            .Produces<IReadOnlyList<SpeakerBioDto>>(200)
-            .Produces(StatusCodes.Status400BadRequest);
+        group.MapGetHandler<GetMeetupLocation.Query, GetMeetupLocation.Response, LocationDto>("/meetups/{meetupId}/location", map => map.Location);
 
-        group.MapGetQuery<GetSpeakerPresentations.Query, GetSpeakerPresentations.Response>("/speakers/{speakerId}/presentations")
-            .Produces<IReadOnlyList<PresentationDto>>(200)
-            .Produces(StatusCodes.Status400BadRequest);
+        group.MapGetHandler<GetMeetupPresentations.Query, GetMeetupPresentations.Response, IReadOnlyList<PresentationDto>>("/meetups/{meetupId}/presentations", map => map.Presentations);
+
+        group.MapGetHandler<GetMeetupRsvps.Query, GetMeetupRsvps.Response, RsvpDto>("/meetups/{meetupId}/rsvps", map => map.Rsvp);
+
+        group.MapGetHandler<GetPresentations.Response, IReadOnlyList<PresentationDto>>("/presentations", map => map.Presentations);
+
+        group.MapGetHandler<GetSpeakers.Response, IReadOnlyList<SpeakerDto>>("/speakers", map => map.Speakers);
+
+        group.MapGetHandler<GetSpeaker.Query, GetSpeaker.Response, SpeakerDto>("/speakers/{speakerId}", map => map.Speaker);
+
+        group.MapGetHandler<GetSpeakerBiographies.Query, GetSpeakerBiographies.Response, IReadOnlyList<SpeakerBiographyDto>>("/speakers/{speakerId}/biographies", map => map.SpeakerBiographies);
+
+        group.MapGetHandler<GetSpeakerPresentations.Query, GetSpeakerPresentations.Response, IReadOnlyList<PresentationDto>>("/speakers/{speakerId}/presentations", map => map.Presentations);
     }
 }
 

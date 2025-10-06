@@ -36,7 +36,9 @@ public static class GetSpeaker
                     TwitterUrl = speaker.TwitterUrl,
                     GitHubUrl = speaker.GitHubUrl,
                     LinkedInUrl = speaker.LinkedInUrl,
-                    Bio = speaker.Bios.FirstOrDefault(b => b.IsPrimary)?.Bio
+                    Bio = speaker.Bios.FirstOrDefault(b => b.IsPrimary)?.Bio,
+                    BlogUrl = speaker.BlogUrl,
+                    ThumbnailUrl = speaker.ThumbnailUrl
                 };
 
                 return Result.Success(new Response(response));

@@ -5,11 +5,11 @@ using Odin.Modules.MeetupPlanner.Infrastructure;
 
 namespace Odin.Modules.MeetupPlanner.Features.Speakers;
 
-public static class GetSpeakerBios
+public static class GetSpeakerBiographies
 {
     public sealed record Query(Guid SpeakerId);
 
-    public sealed record Response(IReadOnlyList<SpeakerBioDto> SpeakerBios);
+    public sealed record Response(IReadOnlyList<SpeakerBiographyDto> SpeakerBiographies);
 
     internal class Handler(MeetupPlannerContext dbContext) : IRequestHandler<Query, Response>
     {
@@ -17,22 +17,22 @@ public static class GetSpeakerBios
         {
             try
             {
-                var bios = await dbContext.SpeakerBios
+                var biographies = await dbContext.SpeakerBios
                     .Where(b => b.SpeakerId == context.Request.SpeakerId)
                     .AsNoTracking()
                     .ToListAsync(cancellationToken: cancellationToken);
 
-                if (bios == null || bios.Count == 0)
+                if (biographies == null || biographies.Count == 0)
                 {
-                    return Result.Failure<Response>(bios == null
+                    return Result.Failure<Response>(biographies == null
                         ? $"Speaker with ID {context.Request.SpeakerId} not found."
-                        : $"No bios found for speaker with ID {context.Request.SpeakerId}.");
+                        : $"No biographies found for speaker with ID {context.Request.SpeakerId}.");
                 }
 
-                var response = bios.Select(b => new SpeakerBioDto
+                var response = biographies.Select(b => new SpeakerBiographyDto
                 {
-                    SpeakerBioId = b.SpeakerBioId,
-                    Bio = b.Bio,
+                    SpeakerBiographyId = b.SpeakerBioId,
+                    Biography = b.Bio,
                     IsPrimary = b.IsPrimary
                 }).ToList();
 
@@ -46,10 +46,10 @@ public static class GetSpeakerBios
     }
 }
 
-public record SpeakerBioDto
+public record SpeakerBiographyDto
 {
-    public Guid SpeakerBioId { get; init; }
+    public Guid SpeakerBiographyId { get; init; }
     public Guid SpeakerId { get; init; }
-    public string Bio { get; init; } = string.Empty;
+    public string Biography { get; init; } = string.Empty;
     public bool IsPrimary { get; init; }
 }
