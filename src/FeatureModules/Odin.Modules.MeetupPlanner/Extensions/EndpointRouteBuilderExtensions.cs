@@ -38,6 +38,15 @@ public static class EndpointRouteBuilderExtensions
         .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 
+    /// <summary>
+    /// Maps a GET endpoint to an asynchronous handler that processes a request and returns a response of the specified
+    /// type.
+    /// </summary>
+    /// <typeparam name="TRequest">The type of the request object received by the endpoint. Must be a reference type.</typeparam>
+    /// <typeparam name="TResponse">The type of the response returned by the request handler. Must be a reference type.</typeparam>
+    /// <param name="builder">The endpoint route builder used to configure the route.</param>
+    /// <param name="path">The route pattern to map the GET endpoint to. Must be a non-empty string.</param>
+    /// <returns>A RouteHandlerBuilder that can be used to further configure the mapped endpoint.</returns>
     public static RouteHandlerBuilder MapGetHandler<TRequest, TResponse>(this IEndpointRouteBuilder builder, string path)
     where TRequest : class
     where TResponse : class
