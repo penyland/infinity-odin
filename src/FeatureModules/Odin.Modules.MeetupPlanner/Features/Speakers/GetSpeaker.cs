@@ -10,7 +10,7 @@ public static class GetSpeaker
 {
     public sealed record Query(Guid SpeakerId);
 
-    public sealed record Response(SpeakerDto Speaker);
+    public sealed record Response(SpeakerDetailedDto Speaker);
 
     internal class Handler(MeetupPlannerContext dbContext) : IRequestHandler<Query, Response>
     {
@@ -28,7 +28,7 @@ public static class GetSpeaker
                     return Result.Failure<Response>($"Speaker with ID {context.Request.SpeakerId} not found.");
                 }
 
-                var response = new SpeakerDto
+                var response = new SpeakerDetailedDto
                 {
                     SpeakerId = speaker.SpeakerId,
                     FullName = speaker.FullName,
@@ -36,7 +36,9 @@ public static class GetSpeaker
                     TwitterUrl = speaker.TwitterUrl,
                     GitHubUrl = speaker.GitHubUrl,
                     LinkedInUrl = speaker.LinkedInUrl,
-                    Bio = speaker.Bios.FirstOrDefault(b => b.IsPrimary)?.Bio
+                    Bio = speaker.Bios.FirstOrDefault(b => b.IsPrimary)?.Bio,
+                    BlogUrl = speaker.BlogUrl,
+                    ThumbnailUrl = speaker.ThumbnailUrl
                 };
 
                 return Result.Success(new Response(response));

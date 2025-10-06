@@ -26,6 +26,7 @@ public static class GetSpeakers
                 {
                     SpeakerId = s.SpeakerId,
                     FullName = s.FullName,
+                    ThumbnailUrl = s.ThumbnailUrl
                 });
 
                 return Result.Success(new Response([.. response]));
