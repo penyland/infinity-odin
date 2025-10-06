@@ -20,6 +20,7 @@ public static class GetSpeakerBiographies
                 var biographies = await dbContext.SpeakerBios
                     .Where(b => b.SpeakerId == context.Request.SpeakerId)
                     .AsNoTracking()
+                    .OrderByDescending(o => o.IsPrimary)
                     .ToListAsync(cancellationToken: cancellationToken);
 
                 if (biographies == null || biographies.Count == 0)
@@ -49,7 +50,6 @@ public static class GetSpeakerBiographies
 public record SpeakerBiographyDto
 {
     public Guid SpeakerBiographyId { get; init; }
-    public Guid SpeakerId { get; init; }
     public string Biography { get; init; } = string.Empty;
     public bool IsPrimary { get; init; }
 }

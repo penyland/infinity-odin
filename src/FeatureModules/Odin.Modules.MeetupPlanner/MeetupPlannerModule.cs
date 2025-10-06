@@ -44,7 +44,7 @@ public class MeetupPlannerModule : WebFeatureModule
 
         group.MapGetHandler<GetLocations.Response, IReadOnlyList<LocationDto>>("/locations", map => map.Locations);
 
-        group.MapGetHandler<GetLocation.Query, GetLocation.Response, LocationDto>("/locations/{locationId}", map => map.Location);
+        group.MapGetHandler<GetLocation.Query, GetLocation.Response, LocationDetailedDto>("/locations/{locationId}", map => map.Location);
 
         group.MapGet("/meetups", async (IRequestHandler<GetMeetups.Query, GetMeetups.Response> handler, [AsParameters] MeetupQueryParameters queryParams) =>
         {
@@ -65,7 +65,7 @@ public class MeetupPlannerModule : WebFeatureModule
 
         group.MapGetHandler<GetMeetup.Query, GetMeetup.Response, MeetupDto>("/meetups/{meetupId}", map => map.Meetup);
 
-        group.MapGetHandler<GetMeetupLocation.Query, GetMeetupLocation.Response, LocationDto>("/meetups/{meetupId}/location", map => map.Location);
+        group.MapGetHandler<GetMeetupLocation.Query, GetMeetupLocation.Response, LocationDetailedDto>("/meetups/{meetupId}/location", map => map.Location);
 
         group.MapGetHandler<GetMeetupPresentations.Query, GetMeetupPresentations.Response, IReadOnlyList<PresentationDto>>("/meetups/{meetupId}/presentations", map => map.Presentations);
 
@@ -75,7 +75,7 @@ public class MeetupPlannerModule : WebFeatureModule
 
         group.MapGetHandler<GetSpeakers.Response, IReadOnlyList<SpeakerDto>>("/speakers", map => map.Speakers);
 
-        group.MapGetHandler<GetSpeaker.Query, GetSpeaker.Response, SpeakerDto>("/speakers/{speakerId}", map => map.Speaker);
+        group.MapGetHandler<GetSpeaker.Query, GetSpeaker.Response, SpeakerDetailedDto>("/speakers/{speakerId}", map => map.Speaker);
 
         group.MapGetHandler<GetSpeakerBiographies.Query, GetSpeakerBiographies.Response, IReadOnlyList<SpeakerBiographyDto>>("/speakers/{speakerId}/biographies", map => map.SpeakerBiographies);
 

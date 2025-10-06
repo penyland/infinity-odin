@@ -41,12 +41,12 @@ public static class GetMeetup
                     new LocationDto
                         {
                             Name = m.Location.Name,
-                            Description = m.Location.Description,
-                            City = m.Location.City,
-                            Country = m.Location.Country,
+                            //Description = m.Location.Description,
+                            //City = m.Location.City,
+                            //Country = m.Location.Country,
                             LocationId = m.Location.LocationId,
-                            PostalCode = m.Location.PostalCode,
-                            Street = m.Location.Street,
+                            //PostalCode = m.Location.PostalCode,
+                            //Street = m.Location.Street,
                             IsActive = m.Location.IsActive
                         },
                         m.ScheduleSlots
@@ -63,6 +63,7 @@ public static class GetMeetup
                                     {
                                         SpeakerId = s.SpeakerId,
                                         FullName = s.FullName,
+                                        ThumbnailUrl = s.ThumbnailUrl
                                     }).ToList()
                             }).ToList()))
                     .FirstOrDefaultAsync(cancellationToken);
