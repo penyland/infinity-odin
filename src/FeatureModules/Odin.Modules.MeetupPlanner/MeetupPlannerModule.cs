@@ -54,7 +54,7 @@ public class MeetupPlannerModule : WebFeatureModule
                 return Results.BadRequest($"Invalid status '{queryParams.Status}'");
             }
 
-            var response = await handler.HandleAsync(new HandlerContext<GetMeetups.Query> { Request = new GetMeetups.Query(meetupStatus.ToString()) });
+            var response = await handler.HandleAsync(new HandlerContext<GetMeetups.Query> { Request = new GetMeetups.Query(meetupStatus) });
 
             return response is Failure ?
                 TypedResults.Problem(response.ToProblemDetails()) :

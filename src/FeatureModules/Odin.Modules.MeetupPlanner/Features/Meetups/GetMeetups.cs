@@ -8,7 +8,7 @@ namespace Odin.Modules.MeetupPlanner.Features.Meetups;
 
 public static class GetMeetups
 {
-    public sealed record Query(string Status);
+    public sealed record Query(MeetupStatus Status);
 
     public record Response(IReadOnlyList<MeetupDto> Meetups);
 
@@ -27,9 +27,9 @@ public static class GetMeetups
                     .OrderBy(m => m.StartUtc)
                     .AsQueryable();
 
-                if (context.Request.Status != "All")
+                if (context.Request.Status != MeetupStatus.All)
                 {
-                    query = query.Where(e => e.Status == context.Request.Status);
+                    query = query.Where(e => e.Status == context.Request.Status.ToString());
                 }
 
                 var meetups = await query
