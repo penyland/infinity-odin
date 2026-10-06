@@ -3,19 +3,16 @@ using Infinity.Toolkit.Messaging.InMemory;
 
 namespace Odin.Api;
 
-public class ApiModule : IWebFeatureModule
+[WebFeatureModule("Odin.Api", "1.0.0")]
+public class ApiModule : WebFeatureModule
 {
-    public IModuleInfo? ModuleInfo { get; }
-
-    public void MapEndpoints(WebApplication app)
+    public override void RegisterModule(IHostApplicationBuilder builder)
     {
+        builder.Services.AddInfinityMessaging()
+            .ConfigureInMemoryBus(builder => { });
     }
 
-    public ModuleContext RegisterModule(ModuleContext context)
+    public override void MapEndpoints(WebApplication app)
     {
-        context.Services.AddInfinityMessaging()
-            .ConfigureInMemoryBus(builder => { });
-
-        return context;
     }
 }

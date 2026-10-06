@@ -2,9 +2,7 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Options;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Interfaces;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using System.Reflection;
 
@@ -20,7 +18,7 @@ public record OpenApiOptions
 
     public string Scopes { get; init; }
 
-    public string[]? ScopesArray => Scopes.Split(" ");
+    public string[]? ScopesArray => Scopes.Split(" ", StringSplitOptions.RemoveEmptyEntries);
 
     public IDictionary<string, string> ScopesDictionary => ScopesArray?.ToDictionary(x => x, x => x) ?? [];
 
@@ -35,31 +33,29 @@ public class OpenApiModule : IWebFeatureModule
 {
     public IModuleInfo ModuleInfo { get; } = new FeatureModuleInfo(typeof(OpenApiModule).FullName, Assembly.GetExecutingAssembly().GetName().Version?.ToString());
 
-    public ModuleContext RegisterModule(ModuleContext context)
+    public void RegisterModule(IHostApplicationBuilder builder)
     {
-        context.Services.AddOpenApi(options =>
+        builder.Services.AddOpenApi(options =>
         {
             options.AddDocumentTransformer((document, serviceProvider, _) =>
             {
-                document.Info.Title = context.Configuration["OpenApi:Info:Title"];
+                document.Info.Title = builder.Configuration["OpenApi:Info:Title"];
                 document.Info.Version = $"Version {Assembly.GetExecutingAssembly().GetName().Version?.ToString()}";
-                document.Info.Description = $"{context.Configuration["OpenApi:Info:Description"]} - Environment: {context.Environment.EnvironmentName}";
-                document.Info.Extensions.Add("Environment", new OpenApiString(context.Environment.EnvironmentName));
+                document.Info.Description = $"{builder.Configuration["OpenApi:Info:Description"]} - Environment: {builder.Environment.EnvironmentName}";
+                document.Info.AddExtension("x-environment", new JsonNodeExtension(builder.Environment.EnvironmentName));
 
                 document.Servers = [];
                 return Task.CompletedTask;
             });
 
-            options.AddDocumentTransformer<OAuth2SecuritySchemeDefinitionDocumentTransformer>();
             options.AddDocumentTransformer<BearerSecuritySchemeDefinitionDocumentTransformer>();
+            options.AddDocumentTransformer<OAuth2SecuritySchemeDefinitionDocumentTransformer>();
             options.AddDocumentTransformer<AddServersDocumentTransformer>();
             options.AddOperationTransformer<SecuritySchemeOperationTransformer>();
         });
 
-        context.Services.Configure<ScalarOptions>(context.Configuration.GetSection("Scalar"));
-        context.Services.Configure<OpenApiOptions>(context.Configuration.GetSection("AzureAd"));
-
-        return context;
+        builder.Services.Configure<ScalarOptions>(builder.Configuration.GetSection("Scalar"));
+        builder.Services.Configure<OpenApiOptions>(builder.Configuration.GetSection("AzureAd"));
     }
 
     public void MapEndpoints(WebApplication app)
@@ -74,13 +70,13 @@ public class OpenApiModule : IWebFeatureModule
             {
                 options
                     .WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl)
-                    .AddPreferredSecuritySchemes("bearer")
                     .AddAuthorizationCodeFlow("oauth2", flow =>
                     {
                         flow.ClientId = openApiOptions?.Value.ClientId;
                         flow.Pkce = Pkce.Sha256;
                         flow.SelectedScopes = openApiOptions?.Value.ScopesArray;
-                    });
+                    })
+                    .AddDefaultScopes("oauth2", GetScopes(app.Configuration));
             });
         }
     }
@@ -98,7 +94,6 @@ public class OpenApiModule : IWebFeatureModule
                 Type = SecuritySchemeType.OAuth2,
                 Name = "oauth2",
                 Scheme = "oauth2",
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "oauth2" },
                 Flows = new OpenApiOAuthFlows
                 {
                     AuthorizationCode = new OpenApiOAuthFlow
@@ -108,14 +103,15 @@ public class OpenApiModule : IWebFeatureModule
                         Scopes = azureAdOptions.ScopesDictionary,
                         Extensions = new Dictionary<string, IOpenApiExtension>
                         {
-                            ["x-usePkce"] = new OpenApiString("SHA-256")
+                            ["x-usePkce"] = new JsonNodeExtension("SHA-256")
                         }
                     }
                 }
             };
 
             document.Components ??= new();
-            document.Components.SecuritySchemes.Add("oauth2", securityScheme);
+            document.AddComponent("oauth2", securityScheme);
+
             return Task.CompletedTask;
         }
     }
@@ -129,10 +125,9 @@ public class OpenApiModule : IWebFeatureModule
                 Type = SecuritySchemeType.Http,
                 Name = "bearer",
                 Scheme = "bearer",
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "bearer" }
             };
             document.Components ??= new();
-            document.Components.SecuritySchemes.Add("bearer", securityScheme);
+            document.Components?.SecuritySchemes?.Add("bearer", securityScheme);
             return Task.CompletedTask;
         }
     }
@@ -162,23 +157,19 @@ public class OpenApiModule : IWebFeatureModule
         {
             if (context.Description.ActionDescriptor.EndpointMetadata.OfType<IAuthorizeData>().Any())
             {
+                operation.Responses ??= [];
                 operation.Responses["401"] = new OpenApiResponse { Description = "Unauthorized" };
                 operation.Responses["403"] = new OpenApiResponse { Description = "Forbidden" };
 
-                var oauth2Scheme = new OpenApiSecurityScheme
+                var oauth2SecurityRequirement = new OpenApiSecurityRequirement()
                 {
-                    Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "oauth2" },
+                    {
+                        new OpenApiSecuritySchemeReference("oauth2"), [.. GetScopes(configuration)]
+                    }
                 };
 
-                var bearerScheme = new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference{Type = ReferenceType.SecurityScheme,Id = "bearer"}
-                };
-
-                var scopes = GetScopes(configuration);
                 operation.Security ??= [];
-                operation.Security.Add(new() { [oauth2Scheme] = [.. scopes] });
-                operation.Security.Add(new() { [bearerScheme] = [.. scopes] });
+                operation.Security.Add(oauth2SecurityRequirement);
             }
 
             return Task.CompletedTask;

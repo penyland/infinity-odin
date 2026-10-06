@@ -5,7 +5,7 @@ using Odin.Api.ExceptionHandlers;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-builder.AddRabbitMQClient("Messaging");
+builder.AddAzureServiceBusClient("sb");
 
 // Add services to the container.
 builder.AddFeatureModules();
@@ -52,5 +52,3 @@ app.UseAuthorization();
 app.MapFeatureModules();
 
 app.Run();
-
-public partial class Program { }

@@ -1,3 +1,4 @@
+using Azure.Messaging.ServiceBus;
 using Microsoft.EntityFrameworkCore;
 
 namespace Odin.Api.Features.VerifyConnections;
@@ -71,6 +72,6 @@ public static class VerifyConnectionsEndpoints
     }
 }
 
-public class TheDbContext(DbContextOptions<YourDbContext> options) : DbContext(options)
+public class TheDbContext(DbContextOptions<TheDbContext> options) : DbContext(options)
 {
 }
