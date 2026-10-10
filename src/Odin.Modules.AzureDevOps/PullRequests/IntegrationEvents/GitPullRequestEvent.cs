@@ -2,6 +2,6 @@
 
 namespace Odin.Modules.AzureDevOps.PullRequests.IntegrationEvents;
 
-internal record GitPullRequestIntegrationEvent : BasePayload<GitPullRequestResource>
+internal record GitPullRequestEvent : BasePayload<GitPullRequestResource>
 {
 }
