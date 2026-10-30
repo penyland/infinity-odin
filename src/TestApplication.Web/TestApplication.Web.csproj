@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Azure.Messaging.ServiceBus" Version="13.6.4" />
     <ProjectReference Include="..\Shared\Odin.ServiceDefaults\Odin.ServiceDefaults.csproj" />
   </ItemGroup>
 

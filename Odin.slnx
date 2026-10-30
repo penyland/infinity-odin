@@ -11,5 +11,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/Odin.Api.IntegrationTests/Odin.Api.IntegrationTests.csproj" />
     <Project Path="tests/Odin.Api.Tests/Odin.Api.Tests.csproj" />
+    <Project Path="tests/TestApplication.Web.Tests/TestApplication.Web.Tests.csproj" />
   </Folder>
 </Solution>

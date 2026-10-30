@@ -1,12 +1,15 @@
 using TestApplication.Web.Components;
+using TestApplication.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.AddAzureServiceBusClient("AzureServiceBus");
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddSingleton<PullRequestEventPublisher>();
 
 var app = builder.Build();
 
