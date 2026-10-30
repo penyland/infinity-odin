@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
+﻿using TUnit.AspNetCore;
 
 namespace Odin.Api.IntegrationTests;
 
-public class IntegrationTestClassFixture : WebApplicationFactory<Program>
+public class IntegrationTestClassFixture : TestWebApplicationFactory<Program>
 {
     protected override IHost CreateHost(IHostBuilder builder)
     {

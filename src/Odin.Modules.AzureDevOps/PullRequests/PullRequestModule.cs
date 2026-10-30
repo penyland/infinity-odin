@@ -1,5 +1,7 @@
 ﻿using Infinity.Toolkit.FeatureModules;
 using Infinity.Toolkit.Handlers;
+using Infinity.Toolkit.Messaging;
+using Infinity.Toolkit.Messaging.Abstractions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +17,9 @@ internal class PullRequestModule : WebFeatureModule
     public override void RegisterModule(IHostApplicationBuilder builder)
     {
         builder.Services.AddRequestHandler<GitPullRequestWebHook.Command, GitPullRequestWebHook.Response, GitPullRequestWebHook.Handler>();
+
+        builder.AddInfinityMessaging()
+            .MapMessageHandler<GitPullRequestEvent, GitPullRequestMessageHandler>();
     }
 
     public override void MapEndpoints(WebApplication app)
@@ -51,6 +56,14 @@ internal static class GitPullRequestWebHook
             logger.LogInformation("Received Git Pull Request > {EventType} : {PullRequestId}", context.Request.Event.EventType, context.Request.Event.Resource.PullRequestId);
             return Task.FromResult(new Response($"Processed Git Pull Request Event: {context.Request.Event.Resource.PullRequestId}"));
         }
+    }
+}
+
+internal class GitPullRequestMessageHandler : IMessageHandler<GitPullRequestEvent>
+{
+    public Task Handle(IMessageHandlerContext<GitPullRequestEvent> context, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 }
 

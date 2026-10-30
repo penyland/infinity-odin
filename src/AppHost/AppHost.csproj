@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Api\Odin.Api\Odin.Api.csproj" />
     <ProjectReference Include="..\Proxy\Odin.Proxy\Odin.Proxy.csproj" />
+    <ProjectReference Include="..\TestApplication.Web\TestApplication.Web.csproj" />
   </ItemGroup>
 
 </Project>
