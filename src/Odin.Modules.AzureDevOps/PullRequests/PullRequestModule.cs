@@ -1,10 +1,10 @@
-﻿using Infinity.Toolkit;
-using Infinity.Toolkit.FeatureModules;
+﻿using Infinity.Toolkit.FeatureModules;
 using Infinity.Toolkit.Handlers;
+using Infinity.Toolkit.Messaging;
+using Infinity.Toolkit.Messaging.Abstractions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Odin.Modules.AzureDevOps.PullRequests.IntegrationEvents;
@@ -17,6 +17,9 @@ internal class PullRequestModule : WebFeatureModule
     public override void RegisterModule(IHostApplicationBuilder builder)
     {
         builder.Services.AddRequestHandler<GitPullRequestWebHook.Command, GitPullRequestWebHook.Response, GitPullRequestWebHook.Handler>();
+
+        builder.AddInfinityMessaging()
+            .MapMessageHandler<GitPullRequestEvent, GitPullRequestMessageHandler>();
     }
 
     public override void MapEndpoints(WebApplication app)
@@ -26,7 +29,7 @@ internal class PullRequestModule : WebFeatureModule
         group.MapPost("/events", HandleGitPullrequestIntegrationEventAsync);
     }
 
-    private static async Task<IResult> HandleGitPullrequestIntegrationEventAsync([FromBody] GitPullRequestIntegrationEvent integrationEvent, [FromServices] IRequestHandler<GitPullRequestWebHook.Command, GitPullRequestWebHook.Response> handler)
+    private static async Task<IResult> HandleGitPullrequestIntegrationEventAsync([FromBody] GitPullRequestEvent integrationEvent, [FromServices] IRequestHandler<GitPullRequestWebHook.Command, GitPullRequestWebHook.Response> handler)
     {
         var @event = new GitPullRequestWebHook.Command(integrationEvent);
         var context = HandlerContextExtensions.Create(@event);
@@ -35,14 +38,14 @@ internal class PullRequestModule : WebFeatureModule
     }
 }
 
-internal class WebHookMessageHandlerContext(GitPullRequestIntegrationEvent integrationEvent) : HandlerContext<GitPullRequestIntegrationEvent>
+internal class WebHookMessageHandlerContext(GitPullRequestEvent integrationEvent) : HandlerContext<GitPullRequestEvent>
 {
-    public GitPullRequestIntegrationEvent IntegrationEvent { get; } = integrationEvent;
+    public GitPullRequestEvent IntegrationEvent { get; } = integrationEvent;
 }
 
 internal static class GitPullRequestWebHook
 {
-    public sealed record Command(GitPullRequestIntegrationEvent Event);
+    public sealed record Command(GitPullRequestEvent Event);
 
     public sealed record Response(string Message);
 
@@ -53,6 +56,14 @@ internal static class GitPullRequestWebHook
             logger.LogInformation("Received Git Pull Request > {EventType} : {PullRequestId}", context.Request.Event.EventType, context.Request.Event.Resource.PullRequestId);
             return Task.FromResult(new Response($"Processed Git Pull Request Event: {context.Request.Event.Resource.PullRequestId}"));
         }
+    }
+}
+
+internal class GitPullRequestMessageHandler : IMessageHandler<GitPullRequestEvent>
+{
+    public Task Handle(IMessageHandlerContext<GitPullRequestEvent> context, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 }
 

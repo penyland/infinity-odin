@@ -1,14 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
-using Shouldly;
-using static Odin.Api.Features.Info.InfoEndpoints;
+﻿using static Odin.Api.Features.Info.InfoEndpoints;
 
 namespace Odin.Api.IntegrationTests.Features;
 
-public class InfoModuleTests(IntegrationTestClassFixture factory) : IClassFixture<IntegrationTestClassFixture>
+[ClassDataSource<IntegrationTestClassFixture>(Shared = SharedType.PerClass)]
+public class InfoModuleTests(IntegrationTestClassFixture factory)
 {
-    private readonly WebApplicationFactory<Program> factory = factory;
-
-    [Fact]
+    [Test]
     public async Task GetVersion_ReturnsSuccessStatusCode()
     {
         // Arrange
@@ -19,7 +16,7 @@ public class InfoModuleTests(IntegrationTestClassFixture factory) : IClassFixtur
         response.EnsureSuccessStatusCode();
     }
 
-    [Fact]
+    [Test]
     public async Task GetVersion_ReturnsExpectedMediaType()
     {
         // Arrange
@@ -27,10 +24,10 @@ public class InfoModuleTests(IntegrationTestClassFixture factory) : IClassFixtur
         // Act
         var response = await client.GetAsync("/info/version", CancellationToken.None);
         // Assert
-        response.Content.Headers.ContentType?.MediaType.ShouldBe("application/json");
+        await Assert.That(response.Content.Headers.ContentType?.MediaType).IsEqualTo("application/json");
     }
 
-    [Fact]
+    [Test]
     public async Task GetInfo_ReturnsExpectedResponse()
     {
         // Arrange
@@ -40,6 +37,6 @@ public class InfoModuleTests(IntegrationTestClassFixture factory) : IClassFixtur
         var response = await client.GetFromJsonAsync<Info>("/info/version", CancellationToken.None);
 
         // Assert
-        response.ShouldNotBeNull();
+        await Assert.That(response).IsNotNull();
     }
 }

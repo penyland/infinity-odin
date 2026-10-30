@@ -1,4 +1,4 @@
-﻿<Project Sdk="Aspire.AppHost.Sdk/13.6.0">
+﻿<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -10,16 +10,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.Azure.AppConfiguration" Version="13.6.0" />
-    <PackageReference Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.6.0" />
-    <PackageReference Include="Aspire.Hosting.Azure.KeyVault" Version="13.6.0" />
-    <PackageReference Include="Aspire.Hosting.Azure.ServiceBus" Version="13.6.0" />
-    <PackageReference Include="Aspire.Hosting.Azure.Storage" Version="13.6.0" />
+    <PackageReference Include="Aspire.Hosting.Azure.AppConfiguration" Version="13.6.4" />
+    <PackageReference Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.6.4" />
+    <PackageReference Include="Aspire.Hosting.Azure.KeyVault" Version="13.6.4" />
+    <PackageReference Include="Aspire.Hosting.Azure.ServiceBus" Version="13.6.4" />
+    <PackageReference Include="Aspire.Hosting.Azure.Storage" Version="13.6.4" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Api\Odin.Api\Odin.Api.csproj" />
     <ProjectReference Include="..\Proxy\Odin.Proxy\Odin.Proxy.csproj" />
+    <ProjectReference Include="..\TestApplication.Web\TestApplication.Web.csproj" />
   </ItemGroup>
 
 </Project>

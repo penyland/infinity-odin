@@ -1,0 +1,273 @@
+﻿@page "/"
+@using System.Text.Json
+@inject PullRequestEventPublisher EventPublisher
+@inject ILogger<Home> Logger
+
+<PageTitle>Pull request event tester</PageTitle>
+
+<div class="container-fluid py-3">
+    <header class="mb-4">
+        <p class="text-uppercase text-secondary fw-semibold mb-1">Azure DevOps · Service Bus</p>
+        <h1 class="display-6 mb-2">Pull request event tester</h1>
+        <p class="text-secondary mb-0">
+            Send sample pull request service-hook messages to the <code>toolkit-development</code> topic.
+        </p>
+    </header>
+
+    @if (_pullRequest is null)
+    {
+        <section class="card shadow-sm mb-4" aria-labelledby="create-pr-heading">
+            <div class="card-body">
+                <h2 class="h4 card-title" id="create-pr-heading">Create a fake pull request</h2>
+                <p class="card-text text-secondary">Creating the PR sends the initial <code>git.pullrequest.created</code> event.</p>
+                <div class="row g-3">
+                    <div class="col-12 col-lg-6">
+                        <label for="pr-title" class="form-label">Title</label>
+                        <input id="pr-title" class="form-control" @bind="_title" maxlength="120" />
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <label for="source-branch" class="form-label">Source branch</label>
+                        <input id="source-branch" class="form-control" @bind="_sourceBranch" />
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <label for="target-branch" class="form-label">Target branch</label>
+                        <input id="target-branch" class="form-control" @bind="_targetBranch" />
+                    </div>
+                </div>
+                <button class="btn btn-primary mt-3" @onclick="CreatePullRequestAsync" disabled="@(_isSending || string.IsNullOrWhiteSpace(_title))">
+                    @if (_isSending)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                        <span>Sending...</span>
+                    }
+                    else
+                    {
+                        <span>Create PR</span>
+                    }
+                </button>
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="card shadow-sm mb-4" aria-labelledby="pr-summary-heading">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                    <div>
+                        <p class="text-secondary mb-1">Pull request #@_pullRequest.PullRequestId</p>
+                        <h2 class="h4 mb-2" id="pr-summary-heading">@_pullRequest.Title</h2>
+                        <p class="mb-0"><code>@_pullRequest.SourceRefName</code> → <code>@_pullRequest.TargetRefName</code></p>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge text-bg-primary">@_pullRequest.Status</span>
+                        @if (_pullRequest.IsDraft)
+                        {
+                            <span class="badge text-bg-secondary">Draft</span>
+                        }
+                        @if (_pullRequest.AutoCompleteEnabled)
+                        {
+                            <span class="badge text-bg-info">Auto-complete enabled</span>
+                        }
+                    </div>
+                </div>
+                <p class="text-secondary mt-3 mb-0">
+                    Revision @_pullRequest.Revision · @_pullRequest.CommentCount comment(s) ·
+                    Reviewer vote: @GetVoteLabel(_pullRequest.ReviewerVote)
+                </p>
+            </div>
+        </section>
+
+        <section class="card shadow-sm mb-4" aria-labelledby="events-heading">
+            <div class="card-body">
+                <h2 class="h4 card-title" id="events-heading">Send a pull request event</h2>
+                <p class="card-text text-secondary">
+                    Actions use Azure DevOps service-hook event types. Updates, comments, and reviewer votes are represented in each message's resource.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var action in PullRequestServiceHookFactory.Actions)
+                    {
+                        <button @key="action.Action"
+                                class="btn btn-outline-primary"
+                                title="@action.Description"
+                                @onclick="() => SendActionAsync(action.Action)"
+                                disabled="@_isSending">
+                            @action.Label
+                        </button>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+
+    @if (_successMessage is not null)
+    {
+        <div class="alert alert-success" role="status">@_successMessage</div>
+    }
+    @if (_errorMessage is not null)
+    {
+        <div class="alert alert-danger" role="alert">@_errorMessage</div>
+    }
+
+    @if (_eventHistory.Count > 0)
+    {
+        <section class="card shadow-sm mb-4" aria-labelledby="history-heading">
+            <div class="card-body">
+                <h2 class="h4 card-title" id="history-heading">Sent events</h2>
+                <ol class="list-group list-group-numbered">
+                    @foreach (var item in _eventHistory)
+                    {
+                        <li @key="item.MessageId" class="list-group-item d-flex flex-wrap justify-content-between gap-2">
+                            <button class="btn btn-link flex-grow-1 p-0 text-start text-decoration-none @(ReferenceEquals(_selectedEvent, item) ? "fw-semibold" : "")"
+                                    aria-pressed="@(ReferenceEquals(_selectedEvent, item))"
+                                    @onclick="() => SelectEvent(item)">
+                                <span><strong>@item.Label</strong> <code>@item.EventType</code></span>
+                                <time class="float-end text-secondary" datetime="@item.SentAt.ToString("O")">@item.SentAt.ToLocalTime().ToString("g")</time>
+                            </button>
+                        </li>
+                    }
+                </ol>
+            </div>
+        </section>
+    }
+
+    @if (_selectedEvent is not null)
+    {
+        <section class="card shadow-sm" aria-labelledby="selected-payload-heading">
+            <h2 class="card-header h5 mb-0" id="selected-payload-heading">
+                Payload: @_selectedEvent.Label (@_selectedEvent.EventType)
+            </h2>
+            <pre class="card-body mb-0 overflow-auto"><code>@JsonSerializer.Serialize(_selectedEvent.Payload, JsonOptions)</code></pre>
+        </section>
+    }
+</div>
+
+@code {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = true
+    };
+
+    private static int nextPullRequestId = 1000;
+    private readonly List<EventHistoryItem> _eventHistory = [];
+    private string _title = "Test pull request";
+    private string _sourceBranch = "refs/heads/feature/test-change";
+    private string _targetBranch = "refs/heads/main";
+    private FakePullRequest? _pullRequest;
+    private EventHistoryItem? _selectedEvent;
+    private string? _successMessage;
+    private string? _errorMessage;
+    private bool _isSending;
+
+    private async Task CreatePullRequestAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_title))
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var pullRequest = new FakePullRequest(
+            Interlocked.Increment(ref nextPullRequestId),
+            1,
+            _title.Trim(),
+            "A sample pull request used to test Azure DevOps event processing.",
+            "active",
+            NormalizeBranch(_sourceBranch, "feature/test-change"),
+            NormalizeBranch(_targetBranch, "main"),
+            false,
+            false,
+            0,
+            false,
+            now,
+            null,
+            1);
+
+        await SendPayloadAsync(
+            "Created PR",
+            PullRequestServiceHookFactory.CreateCreated(pullRequest),
+            pullRequest);
+    }
+
+    private async Task SendActionAsync(PullRequestTestAction action)
+    {
+        if (_pullRequest is null)
+        {
+            return;
+        }
+
+        var (updatedPullRequest, payload) = PullRequestServiceHookFactory.Create(action, _pullRequest);
+        var label = PullRequestServiceHookFactory.Actions.Single(item => item.Action == action).Label;
+        await SendPayloadAsync(label, payload, updatedPullRequest);
+    }
+
+    private void SelectEvent(EventHistoryItem item)
+    {
+        _selectedEvent = item;
+    }
+
+    private async Task SendPayloadAsync(
+        string label,
+        PullRequestServiceHookPayload payload,
+        FakePullRequest updatedPullRequest)
+    {
+        _isSending = true;
+        _successMessage = null;
+        _errorMessage = null;
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+        try
+        {
+            await EventPublisher.SendAsync(payload, timeout.Token);
+            _pullRequest = updatedPullRequest;
+            var historyItem = new EventHistoryItem(
+                payload.Id,
+                label,
+                payload.EventType,
+                DateTimeOffset.UtcNow,
+                payload);
+            _eventHistory.Add(historyItem);
+            _selectedEvent = historyItem;
+            _successMessage = $"Sent {label} to Service Bus topic '{PullRequestEventPublisher.TopicName}'.";
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to send pull request event {EventType}", payload.EventType);
+            _errorMessage = timeout.IsCancellationRequested
+                ? $"Could not send {label} within 30 seconds. Check that the Service Bus emulator is running."
+                : $"Could not send {label} to Service Bus: {exception.Message}";
+        }
+        finally
+        {
+            _isSending = false;
+        }
+    }
+
+    private static string NormalizeBranch(string value, string fallback)
+    {
+        var branch = value.Trim();
+        if (string.IsNullOrWhiteSpace(branch))
+        {
+            branch = fallback;
+        }
+
+        return branch.StartsWith("refs/heads/", StringComparison.OrdinalIgnoreCase)
+            ? branch
+            : $"refs/heads/{branch}";
+    }
+
+    private static string GetVoteLabel(int vote) => vote switch
+    {
+        10 => "Approved",
+        5 => "Approved with suggestions",
+        -5 => "Waiting for author",
+        -10 => "Rejected",
+        _ => "No vote"
+    };
+
+    private sealed record EventHistoryItem(
+        string MessageId,
+        string Label,
+        string EventType,
+        DateTimeOffset SentAt,
+        PullRequestServiceHookPayload Payload);
+}

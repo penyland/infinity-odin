@@ -5,7 +5,7 @@ using Odin.Api.ExceptionHandlers;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-builder.AddAzureServiceBusClient("sb");
+builder.AddAzureServiceBusClient("AzureServiceBus");
 
 // Add services to the container.
 builder.AddFeatureModules();
