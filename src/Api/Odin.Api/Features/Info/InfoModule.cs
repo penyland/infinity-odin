@@ -7,10 +7,9 @@ using System.Runtime.InteropServices;
 
 namespace Odin.Api.Features.Info;
 
+[WebFeatureModule("Odin.Api.Features.Info", "1.0.0")]
 public class InfoModule : WebFeatureModule
 {
-    public override IModuleInfo ModuleInfo { get; } = new FeatureModuleInfo(typeof(OpenApiModule).FullName, Assembly.GetExecutingAssembly().GetName().Version?.ToString());
-
     public override void MapEndpoints(WebApplication app) => app.MapInfoEndpoints();
 }
 

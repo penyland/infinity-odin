@@ -1,13 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Odin.Api.Features.OpenApi;
-using System.Reflection;
+﻿namespace Odin.Api.Features.Messaging;
 
-namespace Odin.Api.Features.Messaging;
-
+[WebFeatureModule("Odin.Api.Features.Messaging", "1.0.0")]
 public class MessagingModule : WebFeatureModule
 {
-    public override IModuleInfo ModuleInfo { get; } = new FeatureModuleInfo(typeof(OpenApiModule).FullName, Assembly.GetExecutingAssembly().GetName().Version?.ToString());
-
     public override void MapEndpoints(WebApplication app) => app.MapMessagingEndpoints();
 
     public override void RegisterModule(IHostApplicationBuilder builder)

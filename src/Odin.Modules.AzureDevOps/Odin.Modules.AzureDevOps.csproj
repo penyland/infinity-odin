@@ -8,9 +8,17 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Azure.Messaging.ServiceBus" Version="13.6.4" />
-    <PackageReference Include="Infinity.Toolkit" Version="1.4.7" />
+    <!--<PackageReference Include="Infinity.Toolkit" Version="1.4.7" />-->
     <PackageReference Include="Infinity.Toolkit.FeatureModules" Version="2.0.3" />
-    <PackageReference Include="Infinity.Toolkit.Messaging" Version="1.2.3" />
+    <!--<PackageReference Include="Infinity.Toolkit.Messaging" Version="1.2.3" />
+    <PackageReference Include="Infinity.Toolkit.Messaging.AzureServiceBus" Version="1.2.3" />-->
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\infinity-toolkit-messaging\src\Infinity.Toolkit.Messaging.AzureServiceBus\Infinity.Toolkit.Messaging.AzureServiceBus.csproj" />
+    <ProjectReference Include="..\..\..\infinity-toolkit-messaging\src\Infinity.Toolkit.Messaging\Infinity.Toolkit.Messaging.csproj" />
+    <ProjectReference Include="..\..\..\infinity-toolkit\src\Infinity.Toolkit.Handlers\Infinity.Toolkit.Handlers.csproj" />
+    <ProjectReference Include="..\..\..\infinity-toolkit\src\Infinity.Toolkit\Infinity.Toolkit.csproj" />
   </ItemGroup>
 
 </Project>

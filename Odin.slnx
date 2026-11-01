@@ -8,6 +8,12 @@
     <Project Path="src/Shared/Odin.ServiceDefaults/Odin.ServiceDefaults.csproj" />
     <Project Path="src/TestApplication.Web/TestApplication.Web.csproj" />
   </Folder>
+  <Folder Name="/src/Toolkit/">
+    <Project Path="../infinity-toolkit-messaging/src/Infinity.Toolkit.Messaging.AzureServiceBus/Infinity.Toolkit.Messaging.AzureServiceBus.csproj" />
+    <Project Path="../infinity-toolkit-messaging/src/Infinity.Toolkit.Messaging/Infinity.Toolkit.Messaging.csproj" />
+    <Project Path="../infinity-toolkit/src/Infinity.Toolkit.Handlers/Infinity.Toolkit.Handlers.csproj" />
+    <Project Path="../infinity-toolkit/src/Infinity.Toolkit/Infinity.Toolkit.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Odin.Api.IntegrationTests/Odin.Api.IntegrationTests.csproj" />
     <Project Path="tests/Odin.Api.Tests/Odin.Api.Tests.csproj" />

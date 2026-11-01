@@ -1,12 +1,15 @@
-﻿using Infinity.Toolkit.FeatureModules;
+﻿using Infinity.Toolkit;
+using Infinity.Toolkit.FeatureModules;
 using Infinity.Toolkit.Handlers;
 using Infinity.Toolkit.Messaging;
-using Infinity.Toolkit.Messaging.Abstractions;
+using Infinity.Toolkit.Messaging.AzureServiceBus;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Odin.Modules.AzureDevOps.PullRequests.Handlers;
 using Odin.Modules.AzureDevOps.PullRequests.IntegrationEvents;
 
 namespace Odin.Modules.AzureDevOps.PullRequests;
@@ -16,10 +19,22 @@ internal class PullRequestModule : WebFeatureModule
 {
     public override void RegisterModule(IHostApplicationBuilder builder)
     {
-        builder.Services.AddRequestHandler<GitPullRequestWebHook.Command, GitPullRequestWebHook.Response, GitPullRequestWebHook.Handler>();
+        //builder.Services.AddRequestHandler<GitPullRequestWebHook.Command, GitPullRequestWebHook.Response, GitPullRequestWebHook.Handler>();
 
         builder.AddInfinityMessaging()
+            .ConfigureAzureServiceBus(static configure =>
+            {
+                configure.AddChannelConsumer<GitPullRequestEvent>(options =>
+                {
+                    options.ChannelName = "toolkit-development";
+                    options.SubscriptionName = "subscription1";
+                    options.RequireCloudEventsTypeProperty = false;
+                });
+            },
+            options => options.ConnectionString = builder.Configuration.GetConnectionString("AzureServiceBus"))
             .MapMessageHandler<GitPullRequestEvent, GitPullRequestMessageHandler>();
+
+        builder.Services.AddTransient<IRequestHandler<GitPullRequestEvent, Result>, GitPullRequestEventHandler>();
     }
 
     public override void MapEndpoints(WebApplication app)
@@ -29,49 +44,20 @@ internal class PullRequestModule : WebFeatureModule
         group.MapPost("/events", HandleGitPullrequestIntegrationEventAsync);
     }
 
-    private static async Task<IResult> HandleGitPullrequestIntegrationEventAsync([FromBody] GitPullRequestEvent integrationEvent, [FromServices] IRequestHandler<GitPullRequestWebHook.Command, GitPullRequestWebHook.Response> handler)
+    private static async Task<IResult> HandleGitPullrequestIntegrationEventAsync([FromBody] GitPullRequestEvent integrationEvent, [FromServices] IRequestHandler<GitPullRequestEvent, Result> handler)
     {
-        var @event = new GitPullRequestWebHook.Command(integrationEvent);
-        var context = HandlerContextExtensions.Create(@event);
+        var context = HandlerContextExtensions.Create(integrationEvent);
         await handler.HandleAsync(context, CancellationToken.None);
         return TypedResults.Ok();
     }
 }
 
-internal class WebHookMessageHandlerContext(GitPullRequestEvent integrationEvent) : HandlerContext<GitPullRequestEvent>
-{
-    public GitPullRequestEvent IntegrationEvent { get; } = integrationEvent;
-}
-
-internal static class GitPullRequestWebHook
-{
-    public sealed record Command(GitPullRequestEvent Event);
-
-    public sealed record Response(string Message);
-
-    internal class Handler(ILogger<Handler> logger) : IRequestHandler<Command, Response>
-    {
-        public Task<Response> HandleAsync(IHandlerContext<Command> context, CancellationToken cancellationToken = default)
-        {
-            logger.LogInformation("Received Git Pull Request > {EventType} : {PullRequestId}", context.Request.Event.EventType, context.Request.Event.Resource.PullRequestId);
-            return Task.FromResult(new Response($"Processed Git Pull Request Event: {context.Request.Event.Resource.PullRequestId}"));
-        }
-    }
-}
-
-internal class GitPullRequestMessageHandler : IMessageHandler<GitPullRequestEvent>
-{
-    public Task Handle(IMessageHandlerContext<GitPullRequestEvent> context, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-}
-
 public static class HandlerContextExtensions
 {
-    public static HandlerContext<T> Create<T>(T request)
+    public static IRequestHandlerContext<T> Create<T>(T request)
+        where T : class
     {
-        return new HandlerContext<T>
+        return new RequestHandlerContext<T>
         {
             Request = request,
             Body = BinaryData.FromObjectAsJson(request)

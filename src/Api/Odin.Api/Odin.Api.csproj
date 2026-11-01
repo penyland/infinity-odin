@@ -19,9 +19,8 @@
     <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.6.4" />
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.2" />
     <PackageReference Include="Azure.Identity" Version="1.21.0" />
-    <PackageReference Include="Infinity.Toolkit" Version="1.4.7" />
+    <!--<PackageReference Include="Infinity.Toolkit" Version="1.4.7" />-->
     <PackageReference Include="Infinity.Toolkit.FeatureModules" Version="2.0.3" />
-    <PackageReference Include="Infinity.Toolkit.Messaging" Version="1.2.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
     <PackageReference Include="Microsoft.Identity.Web" Version="4.16.1" />
@@ -34,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\infinity-toolkit\src\Infinity.Toolkit\Infinity.Toolkit.csproj" />
     <ProjectReference Include="..\..\Odin.Modules.AzureDevOps\Odin.Modules.AzureDevOps.csproj" />
     <ProjectReference Include="..\..\Shared\Odin.ServiceDefaults\Odin.ServiceDefaults.csproj" />
   </ItemGroup>
