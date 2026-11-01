@@ -1,16 +1,67 @@
-MIT License
+AI-Restricted Source-Available License
 
-Copyright (c) 2024 Peter Nylander
+Copyright (c) 2026 Peter Nylander
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This is a custom source-available license. It is not an OSI-approved open
+source license. The source code may be read by anyone, but the permissions
+below are subject to the restrictions in this license.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. Definitions
+
+"Software" means this project’s source code, object code, documentation, and
+other materials distributed under this license, and any copies or
+modifications of them.
+
+"AI Model" means a machine-learning or other artificial-intelligence model,
+including a generative model, language model, embedding model, or a component
+of such a model.
+
+"AI Search Engine" means a search, retrieval, or question-answering system
+that uses artificial intelligence, machine learning, semantic search,
+embeddings, or retrieval-augmented generation to find, rank, summarize, or
+answer questions about indexed material.
+
+2. Permission
+
+Subject to this license, permission is hereby granted, free of charge, to any
+person obtaining a copy of the Software to use, reproduce, modify, create
+derivative works of, publish, distribute, sublicense, and sell copies of the
+Software for any purpose that is not prohibited by Section 3.
+
+This permission is worldwide, non-exclusive, and royalty-free. You may use
+the Software in commercial and non-commercial projects. You must include this
+license and the above copyright notice in all copies or substantial portions
+of the Software.
+
+3. AI-related restrictions
+
+You may not use, and may not authorize or facilitate another person to use,
+the Software or any substantial portion of it:
+
+a. as training, fine-tuning, distillation, evaluation, or benchmark data for
+   an AI Model, or to train, fine-tune, evaluate, improve, or otherwise develop
+   an AI Model; or
+
+b. to populate, ingest into, crawl for, index, embed in, or otherwise add to
+   an AI Search Engine or its search, retrieval, or reference corpus.
+
+These restrictions apply whether the use is direct or through an intermediary,
+and whether the Software is used in source, object, or another form.
+
+4. AI-assisted software development
+
+Section 3 does not prohibit using the Software as context or input to an AI
+tool for ordinary software development assistance, such as code completion,
+explanation, debugging, or generating or modifying software. This permission
+applies only when that use does not train, fine-tune, evaluate, improve, or
+otherwise develop an AI Model, and does not add the Software to an AI Search
+Engine or its corpus. You are responsible for ensuring that the AI tool and
+its provider handle the Software consistently with these restrictions.
+
+5. Conditions and disclaimer
+
+The above copyright notice and this license must be included in all copies or
+substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
