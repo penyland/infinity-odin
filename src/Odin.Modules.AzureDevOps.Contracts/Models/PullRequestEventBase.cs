@@ -1,6 +1,8 @@
-﻿namespace Odin.Modules.AzureDevOps.PullRequests.Contracts.Models;
+﻿using Infinity.Toolkit.Handlers;
 
-public record PullRequestEventBase
+namespace Odin.Modules.AzureDevOps.PullRequests.Contracts.Models;
+
+public record PullRequestEventBase : IEvent
 {
     public GitUser CreatedBy { get; init; }
 

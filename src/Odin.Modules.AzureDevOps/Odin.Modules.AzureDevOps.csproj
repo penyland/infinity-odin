@@ -19,6 +19,7 @@
     <ProjectReference Include="..\..\..\infinity-toolkit-messaging\src\Infinity.Toolkit.Messaging\Infinity.Toolkit.Messaging.csproj" />
     <ProjectReference Include="..\..\..\infinity-toolkit\src\Infinity.Toolkit.Handlers\Infinity.Toolkit.Handlers.csproj" />
     <ProjectReference Include="..\..\..\infinity-toolkit\src\Infinity.Toolkit\Infinity.Toolkit.csproj" />
+    <ProjectReference Include="..\Odin.Modules.AzureDevOps.Contracts\Odin.Modules.AzureDevOps.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

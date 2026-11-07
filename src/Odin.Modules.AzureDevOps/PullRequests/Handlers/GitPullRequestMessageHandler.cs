@@ -1,48 +1,65 @@
 ﻿using Infinity.Toolkit;
 using Infinity.Toolkit.Handlers;
 using Infinity.Toolkit.Messaging.Abstractions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Odin.Modules.AzureDevOps.PullRequests.Contracts.DomainEvents;
 using Odin.Modules.AzureDevOps.PullRequests.Contracts.Models;
-using Odin.Modules.AzureDevOps.PullRequests.IntegrationEvents;
 using Odin.Modules.AzureDevOps.PullRequests.Models;
 using System.Text.Json;
 
 namespace Odin.Modules.AzureDevOps.PullRequests.Handlers;
 
-internal class GitPullRequestEventHandler(ILogger<GitPullRequestEventHandler> logger) : IRequestHandler<GitPullRequestEvent, Result>
+internal class GitPullRequestEventHandler(AzureDevopsPullRequestHandler azureDevopsPullRequestHandler, ILogger<GitPullRequestEventHandler> logger) : IRequestHandler<GitPullRequestEvent, Result>, IMessageHandler<GitPullRequestEvent>
 {
-    public Task<Result> HandleAsync(IRequestHandlerContext<GitPullRequestEvent> context, CancellationToken cancellationToken = default)
+    public async Task Handle(IMessageHandlerContext<GitPullRequestEvent> context, CancellationToken cancellationToken)
+    {
+        var handlerContext = new HandlerContext<GitPullRequestEvent>
+        {
+            Body = context?.Body ?? BinaryData.FromObjectAsJson(context?.Message),
+            Content = context?.Message!
+        };
+
+        await azureDevopsPullRequestHandler.Handle(handlerContext, cancellationToken);
+    }
+
+    public async Task<Result> HandleAsync(IRequestHandlerContext<GitPullRequestEvent> context, CancellationToken cancellationToken = default)
     {
         logger.LogInformation("Received Git Pull Request Event from Service Bus > {EventType} : {PullRequestId}", context?.Request?.EventType, context?.Request?.Resource?.PullRequestId);
-        var jsonDocument = JsonDocument.Parse(context?.Body);
-        var resourceElement = jsonDocument.RootElement.GetProperty("resource");
-        return Task.FromResult(Result.Success());
+
+        var handlerContext = new HandlerContext<GitPullRequestEvent>
+        {
+            Body = context?.Body ?? BinaryData.FromObjectAsJson(context?.Request)
+        };
+
+        await azureDevopsPullRequestHandler.Handle(handlerContext, cancellationToken);
+
+        return Result.Success();
     }
 }
 
-internal class GitPullRequestMessageHandler(IRequestHandler<GitPullRequestEvent, Result> requestHandler, IServiceProvider serviceProvider, ILogger<GitPullRequestMessageHandler> logger) : IMessageHandler<GitPullRequestEvent>
+public class HandlerContext<TBody> : IHandlerContext
+{
+    public TBody Content { get; init; }
+    public required BinaryData Body { get; init; }
+}
+
+internal class AzureDevopsPullRequestHandler(IEventBus eventBus, ILogger<AzureDevopsPullRequestHandler> logger)
 {
     private readonly JsonSerializerOptions jsonSerializerOptions = new(JsonSerializerDefaults.Web);
 
-    public async Task Handle(IMessageHandlerContext<GitPullRequestEvent> context, CancellationToken cancellationToken)
+    public async Task Handle(HandlerContext<GitPullRequestEvent> context, CancellationToken cancellationToken)
     {
-        var requestContext = HandlerContextExtensions.Create<GitPullRequestEvent>(context.Message!);
-        await requestHandler!.HandleAsync(requestContext, cancellationToken);
-        //logger.LogInformation("Received Git Pull Request Event from Service Bus > {EventType} : {PullRequestId}", context.Message!.EventType, context.Message.Resource.PullRequestId);
-        //var jsonDocument = JsonDocument.Parse(context?.Body);
-        //var resourceElement = jsonDocument.RootElement.GetProperty("resource");
+        var jsonDocument = JsonDocument.Parse(context?.Body);
+        var resourceElement = jsonDocument.RootElement.GetProperty("resource");
 
-        //_ = context?.Message?.EventType switch
-        //{
-        //    "git.pullrequest.created" => HandlePullRequestCreatedAsync(resourceElement, cancellationToken),
-        //    "git.pullrequest.updated" => HandlePullRequestUpdatedAsync(context.Message, resourceElement, cancellationToken),
-        //    "git.pullrequest.merged" => HandlePullRequestMergedAsync(resourceElement, cancellationToken),
-        //    "ms.vss-code.git-pullrequest-comment-event" => HandlePullRequestCommentAsync(resourceElement, cancellationToken),
-        //    _ => Task.FromResult("Unknown Event Type")
-        //};
-
+        _ = context?.Content?.EventType switch
+        {
+            "git.pullrequest.created" => HandlePullRequestCreatedAsync(resourceElement, cancellationToken),
+            "git.pullrequest.updated" => HandlePullRequestUpdatedAsync(context.Content, resourceElement, cancellationToken),
+            "git.pullrequest.merged" => HandlePullRequestMergedAsync(resourceElement, cancellationToken),
+            "ms.vss-code.git-pullrequest-comment-event" => HandlePullRequestCommentAsync(resourceElement, cancellationToken),
+            _ => Task.FromResult("Unknown Event Type")
+        };
     }
 
     private async Task HandlePullRequestCreatedAsync(JsonElement resourceElement, CancellationToken cancellationToken)
@@ -51,9 +68,8 @@ internal class GitPullRequestMessageHandler(IRequestHandler<GitPullRequestEvent,
 
         ArgumentNullException.ThrowIfNull(resource, "Pull Request Resource is null");
 
-        var evt = CreateDomainEvent<PullRequestCreated>(resourceElement);
-        var channelProducer = serviceProvider.GetRequiredService<IChannelProducer<PullRequestCreated>>();
-        await channelProducer.SendAsync(evt, cancellationToken: cancellationToken);
+        var evt = CreateIntegrationEvent<PullRequestCreated>(resourceElement);
+        await eventBus.PublishAsync(evt, cancellationToken: cancellationToken);
     }
 
     private async Task HandlePullRequestUpdatedAsync(GitPullRequestEvent gitPullrequestIntegrationEvent, JsonElement resourceElement, CancellationToken cancellationToken)
@@ -61,7 +77,7 @@ internal class GitPullRequestMessageHandler(IRequestHandler<GitPullRequestEvent,
         var updateReason = GitPullRequestParser.ParseUpdateReason(gitPullrequestIntegrationEvent.Message.Text);
         logger?.LogInformation("Update Reason: {UpdateReason}", updateReason);
 
-        var pullRequestUpdatedEvent = CreateDomainEvent<PullRequestUpdatedEvent>(resourceElement) with
+        var pullRequestUpdatedEvent = CreateIntegrationEvent<PullRequestUpdatedEvent>(resourceElement) with
         {
             Reason = updateReason,
             Reviewers = JsonSerializer.Deserialize<Contracts.Models.Reviewer[]>(resourceElement.GetProperty("reviewers").GetRawText(), jsonSerializerOptions) ?? [],
@@ -69,28 +85,20 @@ internal class GitPullRequestMessageHandler(IRequestHandler<GitPullRequestEvent,
             ClosedBy = updateReason == PullRequestUpdateReason.Completed ? JsonSerializer.Deserialize<Contracts.Models.ClosedBy>(resourceElement.GetProperty("closedBy").GetRawText(), jsonSerializerOptions) : default,
         };
 
-        var channelProducer = serviceProvider.GetRequiredService<IChannelProducer<PullRequestUpdatedEvent>>();
-        await channelProducer.SendAsync(pullRequestUpdatedEvent, cancellationToken: cancellationToken);
+        await eventBus.PublishAsync(pullRequestUpdatedEvent, cancellationToken: cancellationToken);
     }
 
     private async Task HandlePullRequestMergedAsync(JsonElement resourceElement, CancellationToken cancellationToken)
     {
-        var evt = CreateDomainEvent<PullRequestMergeCommitCreated>(resourceElement);
-        var channelProducer = serviceProvider.GetRequiredService<IChannelProducer<PullRequestMergeCommitCreated>>();
-        await channelProducer.SendAsync(evt, cancellationToken: cancellationToken);
+        var evt = CreateIntegrationEvent<PullRequestMergeCommitCreated>(resourceElement);
+        await eventBus.PublishAsync(evt, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// Handles the pull request comment event
-    ///
-    /// Need to deserialize the message to get the comment details
-    /// The message has another payload that contains the comment details
-    /// {
-    ///     "eventType": "ms.vss-code.git-pullrequest-comment-event",
-    ///     "resource": {
-    ///         "comment": {},
-    ///         "pullRequest": {}
-    ///     }
+    /// Need to deserialize the message to get the comment details The message has another payload
+    /// that contains the comment details { "eventType":
+    /// "ms.vss-code.git-pullrequest-comment-event", "resource": { "comment": {}, "pullRequest": {}}
     /// }
     /// </summary>
     private async Task HandlePullRequestCommentAsync(JsonElement resourceElement, CancellationToken cancellationToken)
@@ -104,7 +112,7 @@ internal class GitPullRequestMessageHandler(IRequestHandler<GitPullRequestEvent,
         ArgumentNullException.ThrowIfNull(resource, "Pull Request Resource is null");
         ArgumentNullException.ThrowIfNull(commentResource, "Comment Resource is null");
 
-        var evt = CreateDomainEvent<PullRequestComment>(pullRequestElement);
+        var evt = CreateIntegrationEvent<PullRequestComment>(pullRequestElement);
         var pullRequestComment = evt with
         {
             CommentId = commentResource.Id,
@@ -115,11 +123,10 @@ internal class GitPullRequestMessageHandler(IRequestHandler<GitPullRequestEvent,
             PublishedDate = commentResource.PublishedDate,
         };
 
-        var channelProducer = serviceProvider.GetRequiredService<IChannelProducer<PullRequestComment>>();
-        await channelProducer.SendAsync(pullRequestComment, cancellationToken: cancellationToken);
+        await eventBus.PublishAsync(pullRequestComment, cancellationToken: cancellationToken);
     }
 
-    private T CreateDomainEvent<T>(JsonElement resourceElement)
+    private T CreateIntegrationEvent<T>(JsonElement resourceElement)
         where T : PullRequestEventBase, new()
     {
         var resource = resourceElement.Deserialize<GitPullRequestResource>(jsonSerializerOptions);

@@ -33,8 +33,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\infinity-toolkit\src\Infinity.Toolkit.Handlers\Infinity.Toolkit.Handlers.csproj" />
     <ProjectReference Include="..\..\..\..\infinity-toolkit\src\Infinity.Toolkit\Infinity.Toolkit.csproj" />
     <ProjectReference Include="..\..\Odin.Modules.AzureDevOps\Odin.Modules.AzureDevOps.csproj" />
+    <ProjectReference Include="..\..\Odin.Modules.Teams\Odin.Modules.Teams.csproj" />
     <ProjectReference Include="..\..\Shared\Odin.ServiceDefaults\Odin.ServiceDefaults.csproj" />
   </ItemGroup>
 

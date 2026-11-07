@@ -13,5 +13,10 @@
     <PackageReference Include="Microsoft.Teams.Apps" Version="2.1.2" />
     <PackageReference Include="Microsoft.Teams.Cards" Version="2.1.2" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\infinity-toolkit\src\Infinity.Toolkit.Handlers\Infinity.Toolkit.Handlers.csproj" />
+    <ProjectReference Include="..\Odin.Modules.AzureDevOps.Contracts\Odin.Modules.AzureDevOps.Contracts.csproj" />
+  </ItemGroup>
   
 </Project>

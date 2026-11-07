@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Odin.Modules.AzureDevOps.PullRequests.Handlers;
-using Odin.Modules.AzureDevOps.PullRequests.IntegrationEvents;
+using Odin.Modules.AzureDevOps.PullRequests.Models;
 
 namespace Odin.Modules.AzureDevOps.PullRequests;
 
@@ -32,9 +32,12 @@ internal class PullRequestModule : WebFeatureModule
                 });
             },
             options => options.ConnectionString = builder.Configuration.GetConnectionString("AzureServiceBus"))
-            .MapMessageHandler<GitPullRequestEvent, GitPullRequestMessageHandler>();
+            .MapMessageHandler<GitPullRequestEvent, GitPullRequestEventHandler>();
 
-        builder.Services.AddTransient<IRequestHandler<GitPullRequestEvent, Result>, GitPullRequestEventHandler>();
+        //builder.Services.AddTransient<IRequestHandler<GitPullRequestEvent, Result>, GitPullRequestEventHandler>();
+        builder.Services.AddRequestHandler<GitPullRequestEvent, Result, GitPullRequestEventHandler>();
+
+        builder.Services.AddTransient<AzureDevopsPullRequestHandler>();
     }
 
     public override void MapEndpoints(WebApplication app)

@@ -2,6 +2,4 @@
 
 namespace Odin.Modules.AzureDevOps.PullRequests.Contracts.DomainEvents;
 
-public record PullRequestMergeCommitCreated : PullRequestEventBase
-{
-}
+public record PullRequestMergeCommitCreated : PullRequestEventBase;

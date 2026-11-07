@@ -1,3 +1,4 @@
+using Infinity.Toolkit.Handlers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
 using Odin.Api.ExceptionHandlers;
@@ -7,8 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder.AddAzureServiceBusClient("AzureServiceBus");
 
-// Add services to the container.
+builder.Services.AddEventBus();
 builder.AddFeatureModules();
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddMicrosoftIdentityWebApi(builder.Configuration);
