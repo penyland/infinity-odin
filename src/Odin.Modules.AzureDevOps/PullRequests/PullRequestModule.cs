@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Odin.Modules.AzureDevOps.PullRequests.Handlers;
 using Odin.Modules.AzureDevOps.PullRequests.Models;
+using System.Text.Json;
 
 namespace Odin.Modules.AzureDevOps.PullRequests;
 
@@ -19,8 +20,6 @@ internal class PullRequestModule : WebFeatureModule
 {
     public override void RegisterModule(IHostApplicationBuilder builder)
     {
-        //builder.Services.AddRequestHandler<GitPullRequestWebHook.Command, GitPullRequestWebHook.Response, GitPullRequestWebHook.Handler>();
-
         builder.AddInfinityMessaging()
             .ConfigureAzureServiceBus(static configure =>
             {
@@ -34,10 +33,8 @@ internal class PullRequestModule : WebFeatureModule
             options => options.ConnectionString = builder.Configuration.GetConnectionString("AzureServiceBus"))
             .MapMessageHandler<GitPullRequestEvent, GitPullRequestEventHandler>();
 
-        //builder.Services.AddTransient<IRequestHandler<GitPullRequestEvent, Result>, GitPullRequestEventHandler>();
         builder.Services.AddRequestHandler<GitPullRequestEvent, Result, GitPullRequestEventHandler>();
-
-        builder.Services.AddTransient<AzureDevopsPullRequestHandler>();
+        builder.Services.AddTransient<PullRequestHandler>();
     }
 
     public override void MapEndpoints(WebApplication app)
@@ -63,7 +60,7 @@ public static class HandlerContextExtensions
         return new RequestHandlerContext<T>
         {
             Request = request,
-            Body = BinaryData.FromObjectAsJson(request)
+            Payload = new BinaryData(request, new JsonSerializerOptions(JsonSerializerDefaults.Web), type: typeof(T))
         };
     }
 }

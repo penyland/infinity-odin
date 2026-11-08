@@ -21,7 +21,7 @@ internal class PullRequestCreatedHandler(ILogger<PullRequestCreatedHandler> logg
 
     public Task HandleAsync(IEventHandlerContext<PullRequestCreated> context, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Received Pull Request Created Event > {PullRequestId}", context?.Event?.PullRequestId);
+        logger.LogInformation("Received Pull Request Created Event > PR {PullRequestId}: {Title}", context?.Data?.PullRequestId, context?.Data?.Title);
         return Task.CompletedTask;
     }
 }

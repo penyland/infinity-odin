@@ -1,6 +1,4 @@
-﻿using Infinity.Toolkit;
-using Infinity.Toolkit.Handlers;
-using Infinity.Toolkit.Messaging.Abstractions;
+﻿using Infinity.Toolkit.Handlers;
 using Microsoft.Extensions.Logging;
 using Odin.Modules.AzureDevOps.PullRequests.Contracts.DomainEvents;
 using Odin.Modules.AzureDevOps.PullRequests.Contracts.Models;
@@ -9,47 +7,13 @@ using System.Text.Json;
 
 namespace Odin.Modules.AzureDevOps.PullRequests.Handlers;
 
-internal class GitPullRequestEventHandler(AzureDevopsPullRequestHandler azureDevopsPullRequestHandler, ILogger<GitPullRequestEventHandler> logger) : IRequestHandler<GitPullRequestEvent, Result>, IMessageHandler<GitPullRequestEvent>
-{
-    public async Task Handle(IMessageHandlerContext<GitPullRequestEvent> context, CancellationToken cancellationToken)
-    {
-        var handlerContext = new HandlerContext<GitPullRequestEvent>
-        {
-            Body = context?.Body ?? BinaryData.FromObjectAsJson(context?.Message),
-            Content = context?.Message!
-        };
-
-        await azureDevopsPullRequestHandler.Handle(handlerContext, cancellationToken);
-    }
-
-    public async Task<Result> HandleAsync(IRequestHandlerContext<GitPullRequestEvent> context, CancellationToken cancellationToken = default)
-    {
-        logger.LogInformation("Received Git Pull Request Event from Service Bus > {EventType} : {PullRequestId}", context?.Request?.EventType, context?.Request?.Resource?.PullRequestId);
-
-        var handlerContext = new HandlerContext<GitPullRequestEvent>
-        {
-            Body = context?.Body ?? BinaryData.FromObjectAsJson(context?.Request)
-        };
-
-        await azureDevopsPullRequestHandler.Handle(handlerContext, cancellationToken);
-
-        return Result.Success();
-    }
-}
-
-public class HandlerContext<TBody> : IHandlerContext
-{
-    public TBody Content { get; init; }
-    public required BinaryData Body { get; init; }
-}
-
-internal class AzureDevopsPullRequestHandler(IEventBus eventBus, ILogger<AzureDevopsPullRequestHandler> logger)
+internal class PullRequestHandler(IEventBus eventBus, ILogger<PullRequestHandler> logger)
 {
     private readonly JsonSerializerOptions jsonSerializerOptions = new(JsonSerializerDefaults.Web);
 
-    public async Task Handle(HandlerContext<GitPullRequestEvent> context, CancellationToken cancellationToken)
+    public async Task HandleAsync(HandlerContext<GitPullRequestEvent> context, CancellationToken cancellationToken)
     {
-        var jsonDocument = JsonDocument.Parse(context?.Body);
+        var jsonDocument = JsonDocument.Parse(context?.Payload);
         var resourceElement = jsonDocument.RootElement.GetProperty("resource");
 
         _ = context?.Content?.EventType switch
