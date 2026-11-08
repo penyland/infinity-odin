@@ -1,4 +1,9 @@
-﻿namespace Odin.Api.Features.Messaging;
+﻿using Infinity.Toolkit.Messaging;
+using Infinity.Toolkit.Messaging.Abstractions;
+using Infinity.Toolkit.Messaging.AzureServiceBus;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Odin.Api.Features.Messaging;
 
 [WebFeatureModule("Odin.Api.Features.Messaging", "1.0.0")]
 public class MessagingModule : WebFeatureModule
@@ -7,7 +12,20 @@ public class MessagingModule : WebFeatureModule
 
     public override void RegisterModule(IHostApplicationBuilder builder)
     {
-        base.RegisterModule(builder);
+        builder.AddInfinityMessaging()
+            .ConfigureAzureServiceBus(b =>
+            {
+                b.AddChannelProducer<TestEvent>(options =>
+                {
+                    options.ChannelName = "toolkit-development2";
+                })
+                .AddChannelConsumer<TestEvent>(options =>
+                {
+                    options.ChannelName = "toolkit-development2";
+                    options.SubscriptionName = "subscription2";
+                });
+            })
+            .MapMessageHandler<TestEvent, TestEventHandler>();
     }
 }
 
@@ -18,17 +36,24 @@ public static class MessagingEndpoints
         var group = builder.MapGroup("/messaging")
             .WithTags("Messaging");
 
-        //group.MapPost("send", ([FromServices] IConnection connection) =>
-        //{
-        //    var channel = connection.CreateModel();
-        //    var queueName = "test-queue";
-        //    channel.QueueDeclare(queue: queueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
-        //    var message = "Hello World!";
-        //    var body = System.Text.Encoding.UTF8.GetBytes(message);
-        //    channel.BasicPublish(exchange: "", routingKey: queueName, basicProperties: null, body: body);
-        //    return Results.Ok($"Sent message: {message}");
-        //});
+        group.MapPost("send", async ([FromServices] IChannelProducer<TestEvent> producer) =>
+        {
+            var testEvent = new TestEvent(Guid.NewGuid().ToString(), "Test Event", DateTimeOffset.UtcNow);
+            await producer.SendAsync(testEvent, CancellationToken.None);
+            return Results.Ok($"Sent message: {testEvent}");
+        });
 
         return group;
+    }
+}
+
+public record TestEvent(string Id, string Name, DateTimeOffset Timestamp);
+
+public class TestEventHandler(ILogger<TestEventHandler> logger) : IMessageHandler<TestEvent>
+{
+    public Task Handle(IMessageHandlerContext<TestEvent> context, CancellationToken cancellationToken)
+    {
+        logger?.LogInformation("Received event {Id} {Name} {TimeStamp}", context.Message!.Id, context.Message!.Name, context.Message!.Timestamp);
+        return Task.CompletedTask;
     }
 }
