@@ -60,6 +60,7 @@ public static class Extensions
             .WithTracing(tracing =>
             {
                 tracing.AddSource("Infinity.Toolkit.Messaging");
+                tracing.AddSource("testapplication-web");
 
                 tracing.AddSource(builder.Environment.ApplicationName)
                     .AddAspNetCoreInstrumentation()
