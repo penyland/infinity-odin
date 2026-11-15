@@ -1,5 +1,5 @@
 {
   "appHost": {
-    "path": "src/AppHost/Odin.AppHost/Odin.AppHost.csproj"
+    "path": "src/AppHost/AppHost.csproj"
   }
 }

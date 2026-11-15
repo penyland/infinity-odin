@@ -2,6 +2,4 @@
 
 namespace Odin.Modules.AzureDevOps.PullRequests.Contracts.DomainEvents;
 
-public record class PullRequestCreated : PullRequestEventBase
-{
-}
+public record class PullRequestCreated : PullRequestEventBase;
