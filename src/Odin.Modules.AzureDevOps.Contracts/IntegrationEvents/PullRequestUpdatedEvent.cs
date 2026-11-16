@@ -24,7 +24,7 @@ public enum PullRequestUpdateReason
     Unknown
 }
 
-public record PullRequestUpdatedEvent : PullRequestEventBase
+public record PullRequestUpdated : PullRequestEventBase
 {
     public PullRequestUpdateReason Reason { get; init; }
 

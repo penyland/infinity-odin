@@ -23,10 +23,10 @@ internal static class GitPullRequestParser
             string when message.Contains("voted on pull request", StringComparison.OrdinalIgnoreCase) => PullRequestUpdateReason.ResetFeedback,
             string when message.Contains("updated the source branch", StringComparison.OrdinalIgnoreCase) => PullRequestUpdateReason.SourceBranchUpdated,
             string when message.Contains("is waiting for the author", StringComparison.OrdinalIgnoreCase) => PullRequestUpdateReason.WaitingForAuthor,
+            string when message.Contains("cancelled autocomplete", StringComparison.OrdinalIgnoreCase) => PullRequestUpdateReason.AutocompleteCancelled,
+            string when message.Contains("set autocomplete", StringComparison.OrdinalIgnoreCase) => PullRequestUpdateReason.SetAutocomplete,
             _ => PullRequestUpdateReason.Unknown
-            //string when message.Contains("autocomplete cancelled", StringComparison.OrdinalIgnoreCase) => PullRequestUpdateReason.AutocompleteCancelled,
             //string when message.Contains("merged", StringComparison.OrdinalIgnoreCase) => PullRequestUpdateReason.Merged,
-            //string when message.Contains("set autocomplete", StringComparison.OrdinalIgnoreCase) => PullRequestUpdateReason.SetAutocomplete,
         };
     }
 }

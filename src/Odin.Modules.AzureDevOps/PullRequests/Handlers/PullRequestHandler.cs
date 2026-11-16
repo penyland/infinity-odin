@@ -41,7 +41,7 @@ internal class PullRequestHandler(IEventBus eventBus, ILogger<PullRequestHandler
         var updateReason = GitPullRequestParser.ParseUpdateReason(gitPullrequestIntegrationEvent.Message.Text);
         logger?.LogInformation("Update Reason: {UpdateReason}", updateReason);
 
-        var pullRequestUpdatedEvent = CreateIntegrationEvent<PullRequestUpdatedEvent>(resourceElement) with
+        var pullRequestUpdatedEvent = CreateIntegrationEvent<PullRequestUpdated>(resourceElement) with
         {
             Reason = updateReason,
             Reviewers = JsonSerializer.Deserialize<Contracts.Models.Reviewer[]>(resourceElement.GetProperty("reviewers").GetRawText(), jsonSerializerOptions) ?? [],

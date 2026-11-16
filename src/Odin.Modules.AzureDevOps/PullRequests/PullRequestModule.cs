@@ -25,8 +25,8 @@ internal class PullRequestModule : WebFeatureModule
             {
                 configure.AddChannelConsumer<GitPullRequestEvent>(options =>
                 {
-                    options.ChannelName = "toolkit-development";
-                    options.SubscriptionName = "subscription1";
+                    options.ChannelName = "topic1";
+                    options.SubscriptionName = "topic1-subscription1";
                     options.RequireCloudEventsTypeProperty = false;
                 });
             },

@@ -2,10 +2,10 @@
 using Infinity.Toolkit.Handlers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Teams.Cards;
-using Microsoft.Teams.Common;
 using Odin.Modules.AzureDevOps.PullRequests.Contracts.DomainEvents;
 using System.Collections.Concurrent;
 using System.Text.Json;
@@ -18,7 +18,9 @@ internal class TeamsModule : WebFeatureModule
 {
     public override void RegisterModule(IHostApplicationBuilder builder)
     {
+        builder.Services.AddSingleton<PullRequestStatusStreamService>();
         builder.Services.AddEventHandler<PullRequestCreated, PullRequestCreatedHandler>();
+        builder.Services.AddEventHandler<PullRequestUpdated, PullRequestUpdatedHandler>();
     }
 
     public override void MapEndpoints(WebApplication app)
@@ -46,38 +48,79 @@ internal class PullRequestCreatedHandler(PullRequestStatusStreamService streamSe
         var card = new AdaptiveCard
         {
             Schema = "http://adaptivecards.io/schemas/adaptive-card.json",
-            Body =
-            [
-                new TextBlock($"Hello world - PR: {context?.Data?.PullRequestId}")
+            Body =[
+                new TextBlock($"{context?.Data?.Title}")
                 {
                     Wrap = true,
-                    Weight = TextWeight.Bolder
+                    Weight = TextWeight.Bolder,
+                    Size = TextSize.Large
                 },
-                new ToggleInput("Notify me")
+                new TextBlock($"Pull Request ID: {context?.Data?.PullRequestId}")
                 {
-                    Id = "notify"
-                }
+                    Wrap = true,
+                    Weight = TextWeight.Default,
+                    Size = TextSize.Medium
+                },
+                new TextBlock($"Created By: {context?.Data?.CreatedBy.DisplayName}")
+                {
+                    Wrap = true,
+                    Weight = TextWeight.Default,
+                    Size = TextSize.Medium
+                },
             ],
-            Actions =
-            [
-                new ExecuteAction
-                {
-                    Title = "Submit",
-                    Data = new Union<string, SubmitActionData>(new SubmitActionData
-                    {
-                        NonSchemaProperties = new Dictionary<string, object?>
-                        {
-                            { "action", "submit_basic" }
-                        }
-                    }),
-                    AssociatedInputs = AssociatedInputs.Auto
-                }]
+            Actions =[]
         };
 
         var cardJson = JsonSerializer.Serialize(card);
         // Save to database
         // Send to Teams channel
         await streamService.PublishAsync(new PullRequestStatusUpdate(context?.Data?.PullRequestId ?? 0, "Created", cardJson));
+    }
+}
+
+internal class PullRequestUpdatedHandler(PullRequestStatusStreamService streamService, ILogger<PullRequestUpdatedHandler> logger) : IEventHandler<PullRequestUpdated>
+{
+    private readonly ILogger<PullRequestUpdatedHandler> logger = logger;
+    public async Task HandleAsync(IEventHandlerContext<PullRequestUpdated> context, CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Received Pull Request Updated Event > PR {PullRequestId}: {Title} - Reason: {Reason}", context?.Data?.PullRequestId, context?.Data?.Title, context?.Data?.Reason);
+        // Create adaptive card
+        var card = new AdaptiveCard
+        {
+            Schema = "http://adaptivecards.io/schemas/adaptive-card.json",
+            Body =[
+                new TextBlock($"{context?.Data?.Title}")
+                {
+                    Wrap = true,
+                    Weight = TextWeight.Bolder,
+                    Size = TextSize.Large
+                },
+                new TextBlock($"Pull Request ID: {context?.Data?.PullRequestId}")
+                {
+                    Wrap = true,
+                    Weight = TextWeight.Default,
+                    Size = TextSize.Medium
+                },
+                new TextBlock($"Updated By: {context?.Data?.CreatedBy.DisplayName}")
+                {
+                    Wrap = true,
+                    Weight = TextWeight.Default,
+                    Size = TextSize.Medium
+                },
+                new TextBlock($"Update Reason: {context?.Data?.Reason}")
+                {
+                    Wrap = true,
+                    Weight = TextWeight.Default,
+                    Size = TextSize.Medium
+                },
+            ],
+            Actions =[]
+        };
+        var cardJson = JsonSerializer.Serialize(card);
+        //var card2 = AdaptiveCard.Deserialize(cardJson);
+        // Save to database
+        // Send to Teams channel
+        await streamService.PublishAsync(new PullRequestStatusUpdate(context?.Data?.PullRequestId ?? 0, "Updated", cardJson));
     }
 }
 

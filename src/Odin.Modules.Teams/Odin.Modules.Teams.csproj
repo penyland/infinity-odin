@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\infinity-toolkit\src\Infinity.Toolkit.Handlers\Infinity.Toolkit.Handlers.csproj" />
     <ProjectReference Include="..\Odin.Modules.AzureDevOps.Contracts\Odin.Modules.AzureDevOps.Contracts.csproj" />
+    <ProjectReference Include="..\Odin.Modules.Teams.Contracts\Odin.Modules.Teams.Contracts.csproj" />
   </ItemGroup>
   
 </Project>
