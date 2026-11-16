@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Azure.Messaging.ServiceBus" Version="13.6.5" />
+    <PackageReference Include="Infinity.Toolkit.FeatureModules" Version="2.1.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\infinity-toolkit-messaging\src\Infinity.Toolkit.Messaging.AzureServiceBus\Infinity.Toolkit.Messaging.AzureServiceBus.csproj" />
+    <ProjectReference Include="..\Shared\Odin.ServiceDefaults\Odin.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -17,12 +17,12 @@ public class MessagingModule : WebFeatureModule
             {
                 b.AddChannelProducer<TestEvent>(options =>
                 {
-                    options.ChannelName = "toolkit-development2";
+                    options.ChannelName = "topic2";
                 })
                 .AddChannelConsumer<TestEvent>(options =>
                 {
-                    options.ChannelName = "toolkit-development2";
-                    options.SubscriptionName = "subscription2";
+                    options.ChannelName = "topic2";
+                    options.SubscriptionName = "topic2-subscription1";
                 });
             })
             .MapMessageHandler<TestEvent, TestEventHandler>();

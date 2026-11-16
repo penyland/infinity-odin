@@ -12,8 +12,4 @@
     <PackageReference Include="TUnit" Version="1.85.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\TestApplication.Web\TestApplication.Web.csproj" />
-  </ItemGroup>
-
 </Project>

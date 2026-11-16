@@ -1,0 +1,31 @@
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+h1 {
+  margin: 0 0 8px;
+}
+
+.status, .empty {
+  color: #555;
+}
+
+.error {
+  color: #a10f0f;
+}
+
+.cards {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.card {
+  overflow-wrap: anywhere;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+}

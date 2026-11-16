@@ -1,0 +1,29 @@
+{
+  "name": "adaptivecardplayground",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "lint": "oxlint",
+    "test": "node --test src/cardEvents.test.ts",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "adaptivecards": "^3.0.6",
+    "markdown-it": "^15.0.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.2.0",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "oxlint": "^1.93.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}

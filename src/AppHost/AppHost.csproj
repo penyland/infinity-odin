@@ -15,12 +15,13 @@
     <PackageReference Include="Aspire.Hosting.Azure.KeyVault" Version="13.6.5" />
     <PackageReference Include="Aspire.Hosting.Azure.ServiceBus" Version="13.6.5" />
     <PackageReference Include="Aspire.Hosting.Azure.Storage" Version="13.6.5" />
+    <PackageReference Include="Aspire.Hosting.JavaScript" Version="*" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Api\Odin.Api\Odin.Api.csproj" />
     <ProjectReference Include="..\Proxy\Odin.Proxy\Odin.Proxy.csproj" />
-    <ProjectReference Include="..\TestApplication.Web\TestApplication.Web.csproj" />
+    <ProjectReference Include="..\TestAzureDevops\TestAzureDevops.csproj" />
   </ItemGroup>
 
 </Project>

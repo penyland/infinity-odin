@@ -6,39 +6,23 @@ var serviceBus = builder.AddAzureServiceBus("AzureServiceBus")
         emulator.WithLifetime(ContainerLifetime.Persistent);
     });
 
-var topic1 = serviceBus
-    .AddServiceBusTopic("toolkit-development")
-        .AddServiceBusSubscription("subscription1");
+var topic1 = serviceBus.AddServiceBusTopic("topic1");
+topic1.AddServiceBusSubscription("topic1-subscription1");
+topic1.AddServiceBusSubscription("topic1-subscription2");
 
-var topic2 = serviceBus
-    .AddServiceBusTopic("toolkit-development2")
-        .AddServiceBusSubscription("subscription2");
+var topic2 = serviceBus.AddServiceBusTopic("topic2");
+topic2.AddServiceBusSubscription("topic2-subscription1");
+topic2.AddServiceBusSubscription("topic2-subscription2");
 
-builder.AddProject<Projects.Odin_Api>("odin-api")
-    .WithReference(serviceBus, "AzureServiceBus").WaitFor(serviceBus);
+var api = builder.AddProject<Projects.Odin_Api>("Api")
+    .WithReference(serviceBus, "AzureServiceBus").WaitFor(serviceBus)
+    .WithReference(topic1);
 
-builder.AddProject<Projects.TestApplication_Web>("testapplication-web")
+builder.AddViteApp("AdaptiveCardsDemo", "../adaptivecardsdemo")
+    .WithReference(api).WaitFor(api)
+    .WithEnvironment("VITE_API_BASE_URL", api.GetEndpoint("http"));
+
+builder.AddProject<Projects.TestAzureDevops>("AzureDevops")
     .WithReference(serviceBus).WaitFor(serviceBus);
-
-//var storage = builder.AddAzureStorage("odin-storage")
-//    .RunAsEmulator(r =>
-//    {
-//        r.WithLifetime(ContainerLifetime.Persistent)
-//        .WithContainerName("odin-storage")
-//        .WithImageTag("latest")
-//        .WithDataBindMount("c:/temp/azurite");
-//    })
-//    .AddTables("odin-tables");
-
-//var api = builder.AddProject<Projects.Odin_Api>("odin-api")
-//    //.WithReference(storage).WaitFor(storage)
-//    //.WithReference(serviceBus).WaitFor(serviceBus)
-//    .WithScalarCommand();
-
-//var proxy = builder.AddProject<Projects.Odin_Proxy>("odin-proxy")
-//    .WaitFor(api)
-//    .WithReference(api)
-//    .WithExternalHttpEndpoints();
-
 
 builder.Build().Run();
