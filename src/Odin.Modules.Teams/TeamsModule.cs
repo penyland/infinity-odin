@@ -117,7 +117,8 @@ internal class PullRequestUpdatedHandler(PullRequestStatusStreamService streamSe
             Actions =[]
         };
         var cardJson = JsonSerializer.Serialize(card);
-        //var card2 = AdaptiveCard.Deserialize(cardJson);
+        var card2 = JsonSerializer.Deserialize<AdaptiveCard>(cardJson);
+        //var card2 = AdaptiveCard.Deserialize<AdaptiveCard>(cardJson);
         // Save to database
         // Send to Teams channel
         await streamService.PublishAsync(new PullRequestStatusUpdate(context?.Data?.PullRequestId ?? 0, "Updated", cardJson));

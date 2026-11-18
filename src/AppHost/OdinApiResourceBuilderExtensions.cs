@@ -42,3 +42,13 @@ internal static class OdinApiResourceBuilderExtensions
                     : ResourceCommandState.Disabled;
     }
 }
+
+//var storage = builder.AddAzureStorage("odin-storage")
+//    .RunAsEmulator(r =>
+//    {
+//        r.WithLifetime(ContainerLifetime.Persistent)
+//        .WithContainerName("odin-storage")
+//        .WithImageTag("latest")
+//        .WithDataBindMount("c:/temp/azurite");
+//    })
+//    .AddTables("odin-tables");

@@ -17,6 +17,8 @@ internal class GitPullRequestEventHandler(PullRequestHandler azureDevopsPullRequ
             Content = context?.Message!
         };
 
+        logger.LogInformation("TraceParent: {traceparent}", context!.Headers["messagebus.traceparent"]);
+
         await azureDevopsPullRequestHandler.HandleAsync(handlerContext, cancellationToken);
     }
 

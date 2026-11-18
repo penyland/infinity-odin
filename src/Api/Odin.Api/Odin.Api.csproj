@@ -15,15 +15,15 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="Aspire.Azure.Messaging.ServiceBus" Version="13.6.5" />
-    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.6.5" />
+    <PackageReference Include="Aspire.Azure.Messaging.ServiceBus" Version="17.0.0" />
+    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="17.0.0" />
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.2" />
     <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <!--<PackageReference Include="Infinity.Toolkit" Version="1.4.7" />-->
     <PackageReference Include="Infinity.Toolkit.FeatureModules" Version="2.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0" />
     <PackageReference Include="Microsoft.Identity.Web" Version="4.18.0" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.21.0" />
+    <PackageReference Include="Scalar.AspNetCore" Version="3.0.1" />
   </ItemGroup>
 
   <ItemGroup>

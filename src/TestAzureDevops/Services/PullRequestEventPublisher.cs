@@ -29,7 +29,7 @@ public sealed class PullRequestEventPublisher(ServiceBusClient serviceBusClient)
             Subject = payload.EventType
         };
 
-        // 00-<TraceId>-<SpanId>-01
+        // <version>-<TraceId>-<SpanId>-<trace-flags>
         message.ApplicationProperties.Add("messagebus.traceparent", $"00-{activity!.TraceId}-{activity!.SpanId}-01");
         message.ApplicationProperties.Add("messagebus.tracestate", activity.TraceStateString);
 

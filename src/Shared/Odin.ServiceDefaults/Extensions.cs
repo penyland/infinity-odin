@@ -59,6 +59,7 @@ public static class Extensions
             })
             .WithTracing(tracing =>
             {
+                tracing.AddSource("Infinity.Toolkit");
                 tracing.AddSource("Infinity.Toolkit.Messaging");
                 tracing.AddSource("testapplication-web");
 

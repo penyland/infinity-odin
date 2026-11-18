@@ -1,4 +1,5 @@
-﻿using TUnit.AspNetCore;
+﻿using Microsoft.Extensions.Hosting;
+using TUnit.AspNetCore;
 
 namespace Odin.Api.IntegrationTests;
 
