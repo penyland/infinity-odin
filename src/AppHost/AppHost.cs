@@ -2,6 +2,14 @@ using AppHost;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+var sqlServer = builder.AddAzureSqlServer("AzureSqlServer")
+    .RunAsContainer(emulator =>
+    {
+        emulator.WithLifetime(ContainerLifetime.Persistent);
+    });
+
+var teamsdb = sqlServer.AddDatabase("odin-teams");
+
 var serviceBus = builder.AddAzureServiceBus("AzureServiceBus")
     .RunAsEmulator(emulator =>
     {
@@ -16,7 +24,8 @@ var topic2 = serviceBus.AddServiceBusTopic("topic2")
     .AddServiceBusSubscription("topic2-subscription1");
 
 var api = builder.AddDotnetProject("Api", "../Api/Odin.Api")
-    .WithReference(serviceBus, "AzureServiceBus").WaitFor(serviceBus);
+    .WithReference(serviceBus, "AzureServiceBus").WaitFor(serviceBus)
+    .WithReference(teamsdb).WaitFor(teamsdb);
 
 builder.AddTestApplications(serviceBus, api);
 

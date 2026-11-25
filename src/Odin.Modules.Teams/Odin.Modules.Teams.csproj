@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="*" />
     <PackageReference Include="Infinity.Toolkit" Version="1.6.0" />
     <PackageReference Include="Infinity.Toolkit.FeatureModules" Version="2.1.0" />
     <PackageReference Include="Microsoft.Teams.Apps" Version="2.2.1" />

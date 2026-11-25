@@ -9,6 +9,7 @@ using Microsoft.Teams.Cards;
 using Odin.Modules.AzureDevOps.PullRequests.Contracts.DomainEvents;
 using System.Collections.Concurrent;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Channels;
 
 namespace Odin.Modules.Teams;
@@ -116,9 +117,19 @@ internal class PullRequestUpdatedHandler(PullRequestStatusStreamService streamSe
             ],
             Actions =[]
         };
-        var cardJson = JsonSerializer.Serialize(card);
-        var card2 = JsonSerializer.Deserialize<AdaptiveCard>(cardJson);
-        //var card2 = AdaptiveCard.Deserialize<AdaptiveCard>(cardJson);
+
+        var jsonSerializerOptions = new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            WriteIndented = true,
+        };
+
+        var cardJson = JsonSerializer.Serialize(card, jsonSerializerOptions);
+        var card2 = JsonSerializer.Deserialize<AdaptiveCard>(cardJson, jsonSerializerOptions);
+        var card3 = AdaptiveCard.Deserialize(cardJson);
+
+        card3?.Body?.Add(new TextBlock("This is an additional text block added after deserialization."));
+
         // Save to database
         // Send to Teams channel
         await streamService.PublishAsync(new PullRequestStatusUpdate(context?.Data?.PullRequestId ?? 0, "Updated", cardJson));
